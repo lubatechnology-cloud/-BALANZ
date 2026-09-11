@@ -122,21 +122,33 @@ export default function ReportsScreen({ navigation }: any) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Ações</Text>
           <View style={styles.actionsGrid}>
-            <TouchableOpacity style={styles.actionCard}>
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={() => navigation.navigate('Summary')}
+            >
               <Ionicons name="document-text" size={24} color={colors.primary} />
-              <Text style={styles.actionLabel}>Exportar PDF</Text>
+              <Text style={styles.actionLabel}>Resumo</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionCard}>
-              <Ionicons name="table" size={24} color={colors.primary} />
-              <Text style={styles.actionLabel}>Exportar CSV</Text>
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={() => navigation.navigate('FinancialHealth')}
+            >
+              <Ionicons name="heart" size={24} color={colors.primary} />
+              <Text style={styles.actionLabel}>Saúde</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionCard}>
-              <Ionicons name="calendar" size={24} color={colors.primary} />
-              <Text style={styles.actionLabel}>Relatório Mensal</Text>
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={() => navigation.navigate('TransactionList')}
+            >
+              <Ionicons name="list" size={24} color={colors.primary} />
+              <Text style={styles.actionLabel}>Transações</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionCard}>
-              <Ionicons name="pie-chart" size={24} color={colors.primary} />
-              <Text style={styles.actionLabel}>Gráficos</Text>
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={() => navigation.navigate('Budget')}
+            >
+              <Ionicons name="wallet" size={24} color={colors.primary} />
+              <Text style={styles.actionLabel}>Orçamentos</Text>
             </TouchableOpacity>
           </View>
         </View>

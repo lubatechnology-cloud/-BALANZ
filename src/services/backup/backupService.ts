@@ -1,4 +1,4 @@
-import { Transaction } from '../types';
+// backup service
 
 const BACKUP_KEY = '@balanz_backup';
 const BACKUP_HISTORY_KEY = '@balanz_backup_history';

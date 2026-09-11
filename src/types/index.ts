@@ -74,16 +74,52 @@ export interface Category {
 
 export interface Goal {
   id: string;
-  userId: string;
+  userId?: string;
   name: string;
   targetAmount: number;
   currentAmount: number;
-  deadline?: Date;
+  deadline: Date;
   color: string;
   icon: string;
-  isCompleted: boolean;
+  percentage: number;
+  monthlyContribution: number;
   createdAt: Date;
-  updatedAt: Date;
+  updatedAt?: Date;
+}
+
+export interface Budget {
+  id: string;
+  category: string;
+  amount: number;
+  period: 'weekly' | 'monthly' | 'yearly';
+  startDate: Date;
+  endDate: Date;
+  spent: number;
+  remaining: number;
+  percentage: number;
+}
+
+export interface BudgetAlert {
+  budgetId: string;
+  category: string;
+  percentage: number;
+  message: string;
+}
+
+export interface BackupMetadata {
+  id: string;
+  date: Date;
+  size: number;
+  transactionCount: number;
+  type: 'manual' | 'auto';
+}
+
+export interface SubscriptionPlan {
+  id: string;
+  name: string;
+  price: string;
+  period: string;
+  features: string[];
 }
 
 export interface Subscription {

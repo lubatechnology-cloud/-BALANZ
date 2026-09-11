@@ -1,17 +1,74 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   ScrollView,
+  TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '../../theme';
+import {
+  getPendingTransactions,
+  confirmPendingTransaction,
+  rejectPendingTransaction,
+  PendingTransaction,
+} from '../../services/capture/smsService';
+import { useAuth, useTransactions } from '../../hooks';
+import { formatCurrency } from '../../utils/formatters';
 
 export default function PendingTransactionsScreen({ navigation }: any) {
-  const pendingTransactions: any[] = [];
+  const { user } = useAuth();
+  const { addTransaction } = useTransactions(user?.id);
+  const [pendingTransactions, setPendingTransactions] = useState<PendingTransaction[]>([]);
+
+  useEffect(() => {
+    loadPending();
+  }, []);
+
+  const loadPending = async () => {
+    const data = await getPendingTransactions();
+    setPendingTransactions(data);
+  };
+
+  const handleConfirm = async (transaction: PendingTransaction) => {
+    try {
+      await addTransaction({
+        userId: user?.id || '',
+        accountId: '',
+        amount: transaction.amount,
+        type: transaction.type,
+        category: transaction.category,
+        description: transaction.description,
+        date: transaction.date,
+        source: transaction.source,
+        bank: transaction.bank,
+        rawMessage: transaction.rawMessage,
+        isConfirmed: true,
+        isRecurring: false,
+      });
+      await confirmPendingTransaction(transaction.id);
+      setPendingTransactions((prev) => prev.filter((t) => t.id !== transaction.id));
+      Alert.alert('Sucesso', 'Transação confirmada!');
+    } catch (error) {
+      Alert.alert('Erro', 'Não foi possível confirmar');
+    }
+  };
+
+  const handleReject = async (transaction: PendingTransaction) => {
+    await rejectPendingTransaction(transaction.id);
+    setPendingTransactions((prev) => prev.filter((t) => t.id !== transaction.id));
+  };
+
+  const sourceIcons: Record<string, string> = {
+    sms: 'chatbubble',
+    email: 'mail',
+    notification: 'notifications',
+    ocr: 'camera',
+    voice: 'mic',
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -37,23 +94,42 @@ export default function PendingTransactionsScreen({ navigation }: any) {
             <View key={transaction.id} style={styles.transactionCard}>
               <View style={styles.transactionHeader}>
                 <Ionicons
-                  name={transaction.source === 'sms' ? 'chatbubble' : 'mail'}
+                  name={(sourceIcons[transaction.source] || 'document') as any}
                   size={20}
                   color={colors.primary}
                 />
                 <Text style={styles.source}>{transaction.source}</Text>
+                {transaction.bank && (
+                  <Text style={styles.bank}>{transaction.bank}</Text>
+                )}
               </View>
               <Text style={styles.description}>{transaction.description}</Text>
-              <Text style={styles.amount}>
-                {transaction.type === 'income' ? '+' : '-'} R${' '}
-                {transaction.amount.toFixed(2)}
+              <Text style={styles.date}>
+                {new Date(transaction.date).toLocaleDateString('pt-BR')}
+              </Text>
+              <Text
+                style={[
+                  styles.amount,
+                  { color: transaction.type === 'income' ? colors.income : colors.expense },
+                ]}
+              >
+                {transaction.type === 'income' ? '+' : '-'}{' '}
+                {formatCurrency(transaction.amount)}
               </Text>
               <View style={styles.actions}>
-                <TouchableOpacity style={styles.rejectButton}>
+                <TouchableOpacity
+                  style={styles.rejectButton}
+                  onPress={() => handleReject(transaction)}
+                >
                   <Ionicons name="close" size={20} color={colors.expense} />
+                  <Text style={styles.rejectText}>Rejeitar</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.confirmButton}>
+                <TouchableOpacity
+                  style={styles.confirmButton}
+                  onPress={() => handleConfirm(transaction)}
+                >
                   <Ionicons name="checkmark" size={20} color={colors.income} />
+                  <Text style={styles.confirmText}>Confirmar</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -118,36 +194,58 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textTransform: 'capitalize',
   },
+  bank: {
+    fontSize: typography.fontSize.sm,
+    color: colors.primary,
+    fontWeight: typography.fontWeight.medium,
+  },
   description: {
     fontSize: typography.fontSize.md,
     color: colors.text,
     marginBottom: spacing.xs,
   },
+  date: {
+    fontSize: typography.fontSize.sm,
+    color: colors.textMuted,
+    marginBottom: spacing.sm,
+  },
   amount: {
-    fontSize: typography.fontSize.lg,
+    fontSize: typography.fontSize.xl,
     fontWeight: typography.fontWeight.bold,
-    color: colors.text,
     marginBottom: spacing.md,
   },
   actions: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
     gap: spacing.md,
   },
   rejectButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.expense + '20',
-    justifyContent: 'center',
+    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.sm,
+    borderRadius: 8,
+    backgroundColor: colors.expense + '15',
+  },
+  rejectText: {
+    fontSize: typography.fontSize.sm,
+    fontWeight: typography.fontWeight.medium,
+    color: colors.expense,
   },
   confirmButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.income + '20',
-    justifyContent: 'center',
+    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.sm,
+    borderRadius: 8,
+    backgroundColor: colors.income + '15',
+  },
+  confirmText: {
+    fontSize: typography.fontSize.sm,
+    fontWeight: typography.fontWeight.medium,
+    color: colors.income,
   },
 });

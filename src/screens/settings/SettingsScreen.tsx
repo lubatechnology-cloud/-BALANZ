@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -12,12 +12,18 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '../../theme';
 import { useAuth } from '../../hooks';
+import { useSettingsStore } from '../../store/useSettingsStore';
 
 export default function SettingsScreen({ navigation }: any) {
   const { user, logout } = useAuth();
-  const [notifications, setNotifications] = useState(true);
-  const [darkMode, setDarkMode] = useState(true);
-  const [language, setLanguage] = useState('pt-BR');
+  const {
+    notificationsEnabled,
+    toggleNotifications,
+    theme,
+    setTheme,
+    language,
+    setLanguage,
+  } = useSettingsStore();
 
   const handleLogout = () => {
     Alert.alert('Sair', 'Tem certeza que deseja sair?', [
@@ -51,23 +57,56 @@ export default function SettingsScreen({ navigation }: any) {
       ],
     },
     {
+      title: 'Finanças',
+      items: [
+        {
+          icon: 'pie-chart',
+          label: 'Resumo Financeiro',
+          subtitle: 'Visão geral',
+          onPress: () => navigation.navigate('Summary'),
+        },
+        {
+          icon: 'heart',
+          label: 'Saúde Financeira',
+          subtitle: 'Score e dicas',
+          onPress: () => navigation.navigate('FinancialHealth'),
+        },
+        {
+          icon: 'wallet',
+          label: 'Orçamentos',
+          subtitle: 'Controle de gastos',
+          onPress: () => navigation.navigate('Budget'),
+        },
+        {
+          icon: 'flag',
+          label: 'Metas',
+          subtitle: 'Objetivos financeiros',
+          onPress: () => navigation.navigate('Goals'),
+        },
+        {
+          icon: 'swap-horizontal',
+          label: 'Conversor de Moedas',
+          subtitle: 'Taxas de câmbio',
+          onPress: () => navigation.navigate('CurrencyConverter'),
+        },
+      ],
+    },
+    {
       title: 'Preferências',
       items: [
         {
           icon: 'notifications',
           label: 'Notificações',
           subtitle: 'Alertas e lembretes',
-          toggle: true,
-          value: notifications,
-          onToggle: setNotifications,
+          onPress: () => navigation.navigate('Notifications'),
         },
         {
           icon: 'moon',
           label: 'Modo escuro',
           subtitle: 'Tema do aplicativo',
           toggle: true,
-          value: darkMode,
-          onToggle: setDarkMode,
+          value: theme === 'dark',
+          onToggle: (v: boolean) => setTheme(v ? 'dark' : 'light'),
         },
         {
           icon: 'language',
@@ -78,13 +117,19 @@ export default function SettingsScreen({ navigation }: any) {
       ],
     },
     {
-      title: 'Segurança',
+      title: 'Dados e Segurança',
       items: [
         {
           icon: 'shield-checkmark',
           label: 'Privacidade e segurança',
           subtitle: 'Biometria, criptografia',
           onPress: () => navigation.navigate('Privacy'),
+        },
+        {
+          icon: 'cloud',
+          label: 'Backup',
+          subtitle: 'Restaurar e exportar',
+          onPress: () => navigation.navigate('Backup'),
         },
         {
           icon: 'key',
@@ -101,7 +146,7 @@ export default function SettingsScreen({ navigation }: any) {
           icon: 'help-circle',
           label: 'Ajuda',
           subtitle: 'FAQ e suporte',
-          onPress: () => {},
+          onPress: () => navigation.navigate('Help'),
         },
         {
           icon: 'document-text',

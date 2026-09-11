@@ -1,5 +1,5 @@
 import { parseSMSMessage } from './parser';
-import { PendingTransaction } from '../types';
+import { PendingTransaction } from '../../types';
 
 const STORAGE_KEY = '@balanz_pending_transactions';
 

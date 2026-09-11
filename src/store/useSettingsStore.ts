@@ -11,11 +11,13 @@ interface SettingsState {
   voiceCaptureEnabled: boolean;
   monthlyBudget: number | null;
   setCurrency: (currency: string) => void;
+  setLanguage: (language: string) => void;
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
   toggleBiometric: () => void;
   toggleNotifications: () => void;
   toggleSmsCapture: () => void;
   toggleEmailCapture: () => void;
+  toggleVoiceCapture: () => void;
   setMonthlyBudget: (budget: number | null) => void;
 }
 
@@ -31,10 +33,12 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   monthlyBudget: null,
 
   setCurrency: (currency) => set({ currency }),
+  setLanguage: (language) => set({ language }),
   setTheme: (theme) => set({ theme }),
   toggleBiometric: () => set((s) => ({ biometricEnabled: !s.biometricEnabled })),
   toggleNotifications: () => set((s) => ({ notificationsEnabled: !s.notificationsEnabled })),
   toggleSmsCapture: () => set((s) => ({ smsCaptureEnabled: !s.smsCaptureEnabled })),
   toggleEmailCapture: () => set((s) => ({ emailCaptureEnabled: !s.emailCaptureEnabled })),
+  toggleVoiceCapture: () => set((s) => ({ voiceCaptureEnabled: !s.voiceCaptureEnabled })),
   setMonthlyBudget: (monthlyBudget) => set({ monthlyBudget }),
 }));

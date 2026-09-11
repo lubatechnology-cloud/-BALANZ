@@ -10,7 +10,9 @@ import OnboardingScreen from '../screens/onboarding/OnboardingScreen';
 import AddTransactionScreen from '../screens/transactions/AddTransactionScreen';
 import TransactionDetailScreen from '../screens/transactions/TransactionDetailScreen';
 import TransactionListScreen from '../screens/transactions/TransactionListScreen';
+import EditTransactionScreen from '../screens/transactions/EditTransactionScreen';
 import AccountsScreen from '../screens/accounts/AccountsScreen';
+import AddAccountScreen from '../screens/accounts/AddAccountScreen';
 import SubscriptionScreen from '../screens/settings/SubscriptionScreen';
 import PrivacyScreen from '../screens/settings/PrivacyScreen';
 import PendingTransactionsScreen from '../screens/capture/PendingTransactionsScreen';
@@ -20,8 +22,11 @@ import HelpScreen from '../screens/help/HelpScreen';
 import SummaryScreen from '../screens/reports/SummaryScreen';
 import BudgetScreen from '../screens/budget/BudgetScreen';
 import GoalsScreen from '../screens/goals/GoalsScreen';
+import AddGoalScreen from '../screens/goals/AddGoalScreen';
 import CurrencyConverterScreen from '../screens/tools/CurrencyConverterScreen';
 import FinancialHealthScreen from '../screens/reports/FinancialHealthScreen';
+import TermsOfUseScreen from '../screens/settings/TermsOfUseScreen';
+import PrivacyPolicyScreen from '../screens/settings/PrivacyPolicyScreen';
 import { ActivityIndicator, View } from 'react-native';
 import { colors } from '../theme';
 
@@ -81,7 +86,12 @@ export default function AppNavigator() {
           <Stack.Screen name="AddTransaction" component={AddTransactionScreen} />
           <Stack.Screen name="TransactionDetail" component={TransactionDetailScreen} />
           <Stack.Screen name="TransactionList" component={TransactionListScreen} />
+          <Stack.Screen name="EditTransaction" component={EditTransactionScreen} />
           <Stack.Screen name="Accounts" component={AccountsScreen} />
+          <Stack.Screen name="AddAccount" component={AddAccountScreen} />
+          <Stack.Screen name="Goals" component={GoalsScreen} />
+          <Stack.Screen name="AddGoal" component={AddGoalScreen} />
+          <Stack.Screen name="Budget" component={BudgetScreen} />
           <Stack.Screen name="Subscription" component={SubscriptionScreen} />
           <Stack.Screen name="Privacy" component={PrivacyScreen} />
           <Stack.Screen name="PendingTransactions" component={PendingTransactionsScreen} />
@@ -89,10 +99,10 @@ export default function AppNavigator() {
           <Stack.Screen name="Backup" component={BackupScreen} />
           <Stack.Screen name="Help" component={HelpScreen} />
           <Stack.Screen name="Summary" component={SummaryScreen} />
-          <Stack.Screen name="Budget" component={BudgetScreen} />
-          <Stack.Screen name="Goals" component={GoalsScreen} />
           <Stack.Screen name="CurrencyConverter" component={CurrencyConverterScreen} />
           <Stack.Screen name="FinancialHealth" component={FinancialHealthScreen} />
+          <Stack.Screen name="TermsOfUse" component={TermsOfUseScreen} />
+          <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
         </>
       )}
     </Stack.Navigator>

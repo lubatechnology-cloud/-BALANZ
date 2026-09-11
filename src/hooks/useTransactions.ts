@@ -97,6 +97,15 @@ export function useTransactions(userId: string | undefined) {
     return income - expense;
   }, [transactions, getTotalByType]);
 
+  const getExpensesByCategory = useCallback(() => {
+    const expenses = transactions.filter((t) => t.type === 'expense');
+    const byCategory: Record<string, number> = {};
+    for (const t of expenses) {
+      byCategory[t.category] = (byCategory[t.category] || 0) + t.amount;
+    }
+    return byCategory;
+  }, [transactions]);
+
   return {
     transactions,
     isLoading,
@@ -106,6 +115,7 @@ export function useTransactions(userId: string | undefined) {
     getFilteredTransactions,
     getTotalByType,
     getBalance,
+    getExpensesByCategory,
     refresh: loadTransactions,
   };
 }

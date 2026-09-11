@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import * as Keychain from 'react-native-keychain';
 import * as Crypto from 'expo-crypto';
+import * as LocalAuthentication from 'expo-local-authentication';
 import Constants from 'expo-constants';
 
 const ENCRYPTION_KEY = 'balanz-encryption-key';

@@ -1,6 +1,6 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
-import { Transaction, Budget } from '../types';
+import { Transaction } from '../../types';
 
 export async function initializeNotifications(): Promise<boolean> {
   try {
