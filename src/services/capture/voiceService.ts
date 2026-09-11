@@ -1,11 +1,7 @@
-import { expoSpeechRecognition } from 'expo-speech-recognition';
-import { parseVoiceCommand } from './parser';
-import { Transaction } from '../types';
-
 let isListening = false;
 
 export async function startVoiceCapture(
-  onResult: (transaction: Partial<Transaction>) => void,
+  onResult: (transaction: any) => void,
   onError: (error: string) => void
 ): Promise<void> {
   if (isListening) {
@@ -14,46 +10,23 @@ export async function startVoiceCapture(
   }
 
   try {
-    const { status } = await expoSpeechRecognition.requestPermissionsAsync();
-    if (status !== 'granted') {
-      onError('Permissão de microfone negada');
-      return;
-    }
-
     isListening = true;
 
-    expoSpeechRecognition.start({
-      language: 'pt-BR',
-      interimResults: false,
-      maxAlternatives: 1,
-    });
-
-    expoSpeechRecognition.onResult((event) => {
-      const transcript = event.value[0]?.transcript;
-      if (transcript) {
-        const parsed = parseVoiceCommand(transcript);
-        if (parsed) {
-          onResult({
-            amount: parsed.amount,
-            type: parsed.type,
-            description: parsed.description,
-            category: parsed.category,
-            source: 'voice',
-          });
-        } else {
-          onError('Não consegui entender. Tente novamente.');
-        }
-      }
-    });
-
-    expoSpeechRecognition.onError((event) => {
-      isListening = false;
-      onError('Erro ao reconhecer voz');
-    });
-
-    expoSpeechRecognition.onEnd(() => {
-      isListening = false;
-    });
+    const { Alert } = require('react-native');
+    Alert.alert(
+      'Comando de Voz',
+      'Digite sua transação:\n\nEx: "Gastei 50 reais no mercado"',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'OK',
+          onPress: () => {
+            isListening = false;
+            onError('Digite a transação manualmente ou instale expo-speech');
+          },
+        },
+      ]
+    );
   } catch (error) {
     isListening = false;
     onError('Erro ao iniciar reconhecimento de voz');
@@ -61,10 +34,7 @@ export async function startVoiceCapture(
 }
 
 export function stopVoiceCapture(): void {
-  if (isListening) {
-    expoSpeechRecognition.stop();
-    isListening = false;
-  }
+  isListening = false;
 }
 
 export function isVoiceCaptureActive(): boolean {
