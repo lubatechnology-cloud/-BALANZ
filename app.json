@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -14,18 +14,58 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.lubatechnology.balanz"
+      "bundleIdentifier": "com.lubatechnology.balanz",
+      "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0A0F1C"
       },
-      "package": "com.lubatechnology.balanz"
+      "package": "com.lubatechnology.balanz",
+      "versionCode": 1,
+      "permissions": [
+        "CAMERA",
+        "READ_SMS",
+        "RECEIVE_SMS",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "RECORD_AUDIO",
+        "VIBRATE"
+      ]
     },
-    "plugins": [],
-    "experiments": {
-      "typedRoutes": true
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Permissão para fotografar faturas"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Permissão para acessar galeria"
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#6C5CE7"
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Permissão para usar Face ID"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "YOUR_EAS_PROJECT_ID"
+      }
     }
   }
 }
