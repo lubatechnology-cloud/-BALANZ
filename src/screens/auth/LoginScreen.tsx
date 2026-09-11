@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,17 +8,26 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '../../theme';
 import { validateEmail } from '../../utils/validators';
+import { useAuth } from '../../hooks';
 
 export default function LoginScreen({ navigation }: any) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const { login, googleLogin, appleLogin, isLoading, error, clearError } = useAuth();
+
+  useEffect(() => {
+    if (error) {
+      Alert.alert('Erro', error);
+      clearError();
+    }
+  }, [error]);
 
   const handleLogin = async () => {
     if (!validateEmail(email)) {
@@ -30,12 +39,27 @@ export default function LoginScreen({ navigation }: any) {
       return;
     }
 
-    setLoading(true);
-    // TODO: Implement Firebase Auth
-    setTimeout(() => {
-      setLoading(false);
-      navigation.replace('Main');
-    }, 1500);
+    try {
+      await login(email, password);
+    } catch (err) {
+      // Error handled by useAuth hook
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      await googleLogin();
+    } catch (err) {
+      // Error handled by useAuth hook
+    }
+  };
+
+  const handleAppleLogin = async () => {
+    try {
+      await appleLogin();
+    } catch (err) {
+      // Error handled by useAuth hook
+    }
   };
 
   return (
@@ -63,6 +87,7 @@ export default function LoginScreen({ navigation }: any) {
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
+              editable={!isLoading}
             />
           </View>
 
@@ -75,6 +100,7 @@ export default function LoginScreen({ navigation }: any) {
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
+              editable={!isLoading}
             />
             <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
               <Ionicons
@@ -85,18 +111,20 @@ export default function LoginScreen({ navigation }: any) {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
             <Text style={styles.forgotPassword}>Esqueceu a senha?</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
+            style={[styles.button, isLoading && styles.buttonDisabled]}
             onPress={handleLogin}
-            disabled={loading}
+            disabled={isLoading}
           >
-            <Text style={styles.buttonText}>
-              {loading ? 'Entrando...' : 'Entrar'}
-            </Text>
+            {isLoading ? (
+              <ActivityIndicator color={colors.white} />
+            ) : (
+              <Text style={styles.buttonText}>Entrar</Text>
+            )}
           </TouchableOpacity>
 
           <View style={styles.divider}>
@@ -105,13 +133,21 @@ export default function LoginScreen({ navigation }: any) {
             <View style={styles.dividerLine} />
           </View>
 
-          <TouchableOpacity style={styles.socialButton}>
+          <TouchableOpacity
+            style={styles.socialButton}
+            onPress={handleGoogleLogin}
+            disabled={isLoading}
+          >
             <Ionicons name="logo-google" size={20} color={colors.white} />
             <Text style={styles.socialButtonText}>Entrar com Google</Text>
           </TouchableOpacity>
 
           {Platform.OS === 'ios' && (
-            <TouchableOpacity style={[styles.socialButton, styles.appleButton]}>
+            <TouchableOpacity
+              style={[styles.socialButton, styles.appleButton]}
+              onPress={handleAppleLogin}
+              disabled={isLoading}
+            >
               <Ionicons name="logo-apple" size={20} color={colors.white} />
               <Text style={styles.socialButtonText}>Entrar com Apple</Text>
             </TouchableOpacity>

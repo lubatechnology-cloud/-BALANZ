@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,11 +9,13 @@ import {
   Platform,
   Alert,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '../../theme';
 import { validateEmail, validatePassword } from '../../utils/validators';
+import { useAuth } from '../../hooks';
 
 export default function RegisterScreen({ navigation }: any) {
   const [name, setName] = useState('');
@@ -21,9 +23,16 @@ export default function RegisterScreen({ navigation }: any) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const { register, isLoading, error, clearError } = useAuth();
 
   const passwordValidation = validatePassword(password);
+
+  useEffect(() => {
+    if (error) {
+      Alert.alert('Erro', error);
+      clearError();
+    }
+  }, [error]);
 
   const handleRegister = async () => {
     if (!name.trim()) {
@@ -43,12 +52,11 @@ export default function RegisterScreen({ navigation }: any) {
       return;
     }
 
-    setLoading(true);
-    // TODO: Implement Firebase Auth
-    setTimeout(() => {
-      setLoading(false);
-      navigation.replace('Main');
-    }, 1500);
+    try {
+      await register(email, password, name);
+    } catch (err) {
+      // Error handled by useAuth hook
+    }
   };
 
   return (
@@ -82,6 +90,7 @@ export default function RegisterScreen({ navigation }: any) {
                 value={name}
                 onChangeText={setName}
                 autoCapitalize="words"
+                editable={!isLoading}
               />
             </View>
 
@@ -95,6 +104,7 @@ export default function RegisterScreen({ navigation }: any) {
                 onChangeText={setEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                editable={!isLoading}
               />
             </View>
 
@@ -107,6 +117,7 @@ export default function RegisterScreen({ navigation }: any) {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
+                editable={!isLoading}
               />
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                 <Ionicons
@@ -141,17 +152,20 @@ export default function RegisterScreen({ navigation }: any) {
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry={!showPassword}
+                editable={!isLoading}
               />
             </View>
 
             <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
+              style={[styles.button, isLoading && styles.buttonDisabled]}
               onPress={handleRegister}
-              disabled={loading}
+              disabled={isLoading}
             >
-              <Text style={styles.buttonText}>
-                {loading ? 'Criando...' : 'Criar conta'}
-              </Text>
+              {isLoading ? (
+                <ActivityIndicator color={colors.white} />
+              ) : (
+                <Text style={styles.buttonText}>Criar conta</Text>
+              )}
             </TouchableOpacity>
           </View>
 

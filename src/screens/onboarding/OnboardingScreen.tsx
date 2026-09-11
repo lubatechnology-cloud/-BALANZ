@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,23 +8,34 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, spacing, typography } from '../../theme';
 import { ONBOARDING_STEPS } from '../../utils/constants';
 
 const { width } = Dimensions.get('window');
 
-export default function OnboardingScreen({ navigation }: any) {
-  const [step, setStep] = React.useState(0);
+interface OnboardingScreenProps {
+  navigation: any;
+  route: any;
+}
 
-  const handleNext = () => {
+export default function OnboardingScreen({ navigation, route }: OnboardingScreenProps) {
+  const [step, setStep] = useState(0);
+  const onComplete = route?.params?.onComplete;
+
+  const handleNext = async () => {
     if (step < ONBOARDING_STEPS.length - 1) {
       setStep(step + 1);
     } else {
+      await AsyncStorage.setItem('@balanz_onboarding_completed', 'true');
+      if (onComplete) onComplete();
       navigation.replace('Login');
     }
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
+    await AsyncStorage.setItem('@balanz_onboarding_completed', 'true');
+    if (onComplete) onComplete();
     navigation.replace('Login');
   };
 

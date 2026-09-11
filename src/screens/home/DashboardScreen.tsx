@@ -6,22 +6,18 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '../../theme';
 import { formatCurrency, getGreeting } from '../../utils/formatters';
+import { useAuth, useTransactions } from '../../hooks';
 
 const MOCK_DATA = {
   balance: 5420.50,
   income: 8500.00,
   expense: 3079.50,
-  recentTransactions: [
-    { id: '1', description: 'Supermercado', amount: -156.80, category: 'food', date: 'Hoje' },
-    { id: '2', description: 'Uber', amount: -23.50, category: 'transport', date: 'Hoje' },
-    { id: '3', description: 'Salário', amount: 8500.00, category: 'salary', date: 'Ontem' },
-    { id: '4', description: 'Farmácia', amount: -45.90, category: 'health', date: 'Ontem' },
-  ],
 };
 
 const categoryIcons: Record<string, string> = {
@@ -34,15 +30,34 @@ const categoryIcons: Record<string, string> = {
   shopping: 'bag',
 };
 
-export default function DashboardScreen() {
+export default function DashboardScreen({ navigation }: any) {
   const [refreshing, setRefreshing] = React.useState(false);
+  const { user, logout } = useAuth();
+  const { transactions, getBalance, getTotalByType } = useTransactions(user?.id);
 
-  const onRefresh = React.useCallback(() => {
+  const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
+    // Reload data here
     setTimeout(() => setRefreshing(false), 1500);
   }, []);
 
-  const balanceColor = MOCK_DATA.balance >= 0 ? colors.income : colors.expense;
+  const balance = getBalance();
+  const income = getTotalByType('income');
+  const expense = getTotalByType('expense');
+  const balanceColor = balance >= 0 ? colors.income : colors.expense;
+
+  const recentTransactions = transactions.slice(0, 5);
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Sair',
+      'Tem certeza que deseja sair?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Sair', style: 'destructive', onPress: logout },
+      ]
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -59,31 +74,35 @@ export default function DashboardScreen() {
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>{getGreeting()}</Text>
-            <Text style={styles.userName}>Usuário</Text>
+            <Text style={styles.userName}>{user?.displayName || 'Usuário'}</Text>
           </View>
-          <TouchableOpacity style={styles.avatar}>
-            <Ionicons name="person" size={24} color={colors.primary} />
+          <TouchableOpacity style={styles.avatar} onPress={handleLogout}>
+            {user?.photoURL ? (
+              <Ionicons name="person" size={24} color={colors.primary} />
+            ) : (
+              <Ionicons name="person" size={24} color={colors.primary} />
+            )}
           </TouchableOpacity>
         </View>
 
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>Saldo total</Text>
           <Text style={[styles.balanceValue, { color: balanceColor }]}>
-            {formatCurrency(MOCK_DATA.balance)}
+            {formatCurrency(balance || MOCK_DATA.balance)}
           </Text>
           <View style={styles.balanceDetails}>
             <View style={styles.balanceDetail}>
               <View style={[styles.indicator, { backgroundColor: colors.income }]} />
               <Text style={styles.balanceDetailLabel}>Receitas</Text>
               <Text style={[styles.balanceDetailValue, { color: colors.income }]}>
-                {formatCurrency(MOCK_DATA.income)}
+                {formatCurrency(income || MOCK_DATA.income)}
               </Text>
             </View>
             <View style={styles.balanceDetail}>
               <View style={[styles.indicator, { backgroundColor: colors.expense }]} />
               <Text style={styles.balanceDetailLabel}>Despesas</Text>
               <Text style={[styles.balanceDetailValue, { color: colors.expense }]}>
-                {formatCurrency(Math.abs(MOCK_DATA.expense))}
+                {formatCurrency(Math.abs(expense || MOCK_DATA.expense))}
               </Text>
             </View>
           </View>
@@ -124,34 +143,44 @@ export default function DashboardScreen() {
             </TouchableOpacity>
           </View>
 
-          {MOCK_DATA.recentTransactions.map((transaction) => (
-            <TouchableOpacity key={transaction.id} style={styles.transactionItem}>
-              <View style={styles.transactionLeft}>
-                <View style={styles.transactionIcon}>
-                  <Ionicons
-                    name={(categoryIcons[transaction.category] || 'wallet') as any}
-                    size={20}
-                    color={colors.primary}
-                  />
+          {recentTransactions.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Ionicons name="wallet-outline" size={48} color={colors.textMuted} />
+              <Text style={styles.emptyText}>Nenhuma transação ainda</Text>
+              <Text style={styles.emptySubtext}>Adicione sua primeira transação</Text>
+            </View>
+          ) : (
+            recentTransactions.map((transaction) => (
+              <TouchableOpacity key={transaction.id} style={styles.transactionItem}>
+                <View style={styles.transactionLeft}>
+                  <View style={styles.transactionIcon}>
+                    <Ionicons
+                      name={(categoryIcons[transaction.category] || 'wallet') as any}
+                      size={20}
+                      color={colors.primary}
+                    />
+                  </View>
+                  <View>
+                    <Text style={styles.transactionDescription}>
+                      {transaction.description}
+                    </Text>
+                    <Text style={styles.transactionDate}>
+                      {new Date(transaction.date).toLocaleDateString('pt-BR')}
+                    </Text>
+                  </View>
                 </View>
-                <View>
-                  <Text style={styles.transactionDescription}>
-                    {transaction.description}
-                  </Text>
-                  <Text style={styles.transactionDate}>{transaction.date}</Text>
-                </View>
-              </View>
-              <Text
-                style={[
-                  styles.transactionAmount,
-                  { color: transaction.amount >= 0 ? colors.income : colors.expense },
-                ]}
-              >
-                {transaction.amount >= 0 ? '+' : ''}
-                {formatCurrency(transaction.amount)}
-              </Text>
-            </TouchableOpacity>
-          ))}
+                <Text
+                  style={[
+                    styles.transactionAmount,
+                    { color: transaction.type === 'income' ? colors.income : colors.expense },
+                  ]}
+                >
+                  {transaction.type === 'income' ? '+' : '-'}
+                  {formatCurrency(transaction.amount)}
+                </Text>
+              </TouchableOpacity>
+            ))
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -300,5 +329,19 @@ const styles = StyleSheet.create({
   transactionAmount: {
     fontSize: typography.fontSize.md,
     fontWeight: typography.fontWeight.semibold,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: spacing['3xl'],
+    gap: spacing.sm,
+  },
+  emptyText: {
+    fontSize: typography.fontSize.lg,
+    fontWeight: typography.fontWeight.medium,
+    color: colors.textSecondary,
+  },
+  emptySubtext: {
+    fontSize: typography.fontSize.md,
+    color: colors.textMuted,
   },
 });

@@ -1,7 +1,8 @@
 export type RootStackParamList = {
-  Onboarding: undefined;
+  Onboarding: { onComplete?: () => void } | undefined;
   Login: undefined;
   Register: undefined;
+  ForgotPassword: undefined;
   Main: undefined;
   TransactionDetail: { transactionId: string };
   AddTransaction: { type?: 'income' | 'expense' | 'transfer' };
