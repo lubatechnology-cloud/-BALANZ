@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "BALANZ",
+    "slug": "balanz",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0A0F1C"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.lubatechnology.balanz"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0A0F1C"
+      },
+      "package": "com.lubatechnology.balanz"
+    },
+    "plugins": [],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
