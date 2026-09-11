@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,107 +6,195 @@ import {
   ScrollView,
   TouchableOpacity,
   Switch,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '../../theme';
+import { useAuth } from '../../hooks';
 
-interface SettingItemProps {
-  icon: string;
-  title: string;
-  subtitle?: string;
-  right?: React.ReactNode;
-  onPress?: () => void;
-}
+export default function SettingsScreen({ navigation }: any) {
+  const { user, logout } = useAuth();
+  const [notifications, setNotifications] = useState(true);
+  const [darkMode, setDarkMode] = useState(true);
+  const [language, setLanguage] = useState('pt-BR');
 
-function SettingItem({ icon, title, subtitle, right, onPress }: SettingItemProps) {
-  return (
-    <TouchableOpacity style={styles.settingItem} onPress={onPress}>
-      <View style={styles.settingLeft}>
-        <View style={styles.settingIcon}>
-          <Ionicons name={icon as any} size={20} color={colors.primary} />
-        </View>
-        <View>
-          <Text style={styles.settingTitle}>{title}</Text>
-          {subtitle && <Text style={styles.settingSubtitle}>{subtitle}</Text>}
-        </View>
-      </View>
-      {right || <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />}
-    </TouchableOpacity>
-  );
-}
+  const handleLogout = () => {
+    Alert.alert('Sair', 'Tem certeza que deseja sair?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Sair', style: 'destructive', onPress: logout },
+    ]);
+  };
 
-export default function SettingsScreen() {
-  const [notifications, setNotifications] = React.useState(true);
-  const [biometric, setBiometric] = React.useState(false);
-  const [smsCapture, setSmsCapture] = React.useState(false);
-  const [emailCapture, setEmailCapture] = React.useState(false);
+  const settingsSections = [
+    {
+      title: 'Conta',
+      items: [
+        {
+          icon: 'person',
+          label: 'Perfil',
+          subtitle: user?.displayName || user?.email,
+          onPress: () => {},
+        },
+        {
+          icon: 'card',
+          label: 'Assinatura',
+          subtitle: 'Gerenciar plano',
+          onPress: () => navigation.navigate('Subscription'),
+        },
+        {
+          icon: 'wallet',
+          label: 'Contas bancárias',
+          subtitle: 'Gerenciar contas',
+          onPress: () => navigation.navigate('Accounts'),
+        },
+      ],
+    },
+    {
+      title: 'Preferências',
+      items: [
+        {
+          icon: 'notifications',
+          label: 'Notificações',
+          subtitle: 'Alertas e lembretes',
+          toggle: true,
+          value: notifications,
+          onToggle: setNotifications,
+        },
+        {
+          icon: 'moon',
+          label: 'Modo escuro',
+          subtitle: 'Tema do aplicativo',
+          toggle: true,
+          value: darkMode,
+          onToggle: setDarkMode,
+        },
+        {
+          icon: 'language',
+          label: 'Idioma',
+          subtitle: language === 'pt-BR' ? 'Português (BR)' : 'English',
+          onPress: () => {},
+        },
+      ],
+    },
+    {
+      title: 'Segurança',
+      items: [
+        {
+          icon: 'shield-checkmark',
+          label: 'Privacidade e segurança',
+          subtitle: 'Biometria, criptografia',
+          onPress: () => navigation.navigate('Privacy'),
+        },
+        {
+          icon: 'key',
+          label: 'Alterar senha',
+          subtitle: 'Atualizar senha',
+          onPress: () => navigation.navigate('ForgotPassword'),
+        },
+      ],
+    },
+    {
+      title: 'Sobre',
+      items: [
+        {
+          icon: 'help-circle',
+          label: 'Ajuda',
+          subtitle: 'FAQ e suporte',
+          onPress: () => {},
+        },
+        {
+          icon: 'document-text',
+          label: 'Termos de uso',
+          subtitle: 'Política e termos',
+          onPress: () => navigation.navigate('TermsOfUse'),
+        },
+        {
+          icon: 'document-text',
+          label: 'Política de privacidade',
+          subtitle: 'Como tratamos seus dados',
+          onPress: () => navigation.navigate('PrivacyPolicy'),
+        },
+        {
+          icon: 'information-circle',
+          label: 'Versão',
+          subtitle: '1.0.0',
+          onPress: () => {},
+        },
+      ],
+    },
+  ];
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView>
         <View style={styles.header}>
           <Text style={styles.title}>Configurações</Text>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Conta</Text>
-          <SettingItem icon="person" title="Perfil" subtitle="Nome, email, foto" />
-          <SettingItem icon="wallet" title="Contas" subtitle="Gerenciar contas bancárias" />
-          <SettingItem icon="diamond" title="BALANZ Premium" subtitle="Desbloquear todos os recursos" />
+        <View style={styles.profileCard}>
+          <View style={styles.avatar}>
+            <Ionicons name="person" size={32} color={colors.primary} />
+          </View>
+          <View style={styles.profileInfo}>
+            <Text style={styles.profileName}>
+              {user?.displayName || 'Usuário'}
+            </Text>
+            <Text style={styles.profileEmail}>{user?.email}</Text>
+          </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Captura automática</Text>
-          <SettingItem
-            icon="chatbubble"
-            title="Captura por SMS"
-            subtitle="Detectar pagamentos via SMS"
-            right={<Switch value={smsCapture} onValueChange={setSmsCapture} trackColor={{ true: colors.primary }} />}
-          />
-          <SettingItem
-            icon="mail"
-            title="Captura por Email"
-            subtitle="Detectar pagamentos via email"
-            right={<Switch value={emailCapture} onValueChange={setEmailCapture} trackColor={{ true: colors.primary }} />}
-          />
-        </View>
+        {settingsSections.map((section, sectionIndex) => (
+          <View key={sectionIndex} style={styles.section}>
+            <Text style={styles.sectionTitle}>{section.title}</Text>
+            {section.items.map((item, itemIndex) => (
+              <TouchableOpacity
+                key={itemIndex}
+                style={styles.settingItem}
+                onPress={item.onPress}
+                disabled={item.toggle}
+              >
+                <View style={styles.settingLeft}>
+                  <Ionicons
+                    name={item.icon as any}
+                    size={22}
+                    color={colors.primary}
+                  />
+                  <View>
+                    <Text style={styles.settingLabel}>{item.label}</Text>
+                    <Text style={styles.settingSubtitle}>{item.subtitle}</Text>
+                  </View>
+                </View>
+                {item.toggle ? (
+                  <Switch
+                    value={item.value}
+                    onValueChange={item.onToggle}
+                    trackColor={{
+                      false: colors.surfaceLight,
+                      true: colors.primary + '50',
+                    }}
+                    thumbColor={item.value ? colors.primary : colors.textMuted}
+                  />
+                ) : (
+                  <Ionicons
+                    name="chevron-forward"
+                    size={20}
+                    color={colors.textMuted}
+                  />
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        ))}
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Segurança</Text>
-          <SettingItem
-            icon="finger-print"
-            title="Autenticação biométrica"
-            subtitle="Face ID / Touch ID"
-            right={<Switch value={biometric} onValueChange={setBiometric} trackColor={{ true: colors.primary }} />}
-          />
-          <SettingItem icon="lock" title="Alterar senha" />
-          <SettingItem icon="shield-checkmark" title="Política de Privacidade" />
-          <SettingItem icon="document-text" title="Termos de Uso" />
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Preferências</Text>
-          <SettingItem
-            icon="notifications"
-            title="Notificações"
-            right={<Switch value={notifications} onValueChange={setNotifications} trackColor={{ true: colors.primary }} />}
-          />
-          <SettingItem icon="globe" title="Idioma" subtitle="Português" />
-          <SettingItem icon="cash" title="Moeda" subtitle="BRL (R$)" />
-          <SettingItem icon="moon" title="Modo escuro" />
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Dados</Text>
-          <SettingItem icon="download" title="Exportar dados" subtitle="PDF ou CSV" />
-          <SettingItem icon="cloud-upload" title="Backup" subtitle="Último: hoje" />
-          <SettingItem icon="trash" title="Apagar conta" subtitle="Remover todos os dados" />
-        </View>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Ionicons name="log-out" size={22} color={colors.expense} />
+          <Text style={styles.logoutText}>Sair da conta</Text>
+        </TouchableOpacity>
 
         <View style={styles.footer}>
-          <Text style={styles.version}>BALANZ v1.0.0</Text>
-          <Text style={styles.copyright}>Feito com ♥ pela Lubatechnology</Text>
+          <Text style={styles.footerText}>BALANZ v1.0.0</Text>
+          <Text style={styles.footerText}>© 2024 Luba Technology</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -120,67 +208,102 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.base,
-    paddingBottom: spacing.xl,
+    paddingVertical: spacing.base,
   },
   title: {
-    fontSize: typography.fontSize['3xl'],
+    fontSize: typography.fontSize.xl,
     fontWeight: typography.fontWeight.bold,
     color: colors.text,
   },
+  profileCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    marginHorizontal: spacing.xl,
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    padding: spacing.lg,
+    marginBottom: spacing.xl,
+  },
+  avatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.primary + '20',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  profileInfo: {
+    flex: 1,
+  },
+  profileName: {
+    fontSize: typography.fontSize.lg,
+    fontWeight: typography.fontWeight.semibold,
+    color: colors.text,
+  },
+  profileEmail: {
+    fontSize: typography.fontSize.md,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
   section: {
     marginBottom: spacing.xl,
+    paddingHorizontal: spacing.xl,
   },
   sectionTitle: {
     fontSize: typography.fontSize.sm,
-    fontWeight: typography.fontWeight.semibold,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    paddingHorizontal: spacing.xl,
+    fontWeight: typography.fontWeight.medium,
+    color: colors.textSecondary,
     marginBottom: spacing.sm,
+    textTransform: 'uppercase',
   },
   settingItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
     backgroundColor: colors.surface,
+    borderRadius: 12,
+    padding: spacing.base,
+    marginBottom: spacing.sm,
   },
   settingLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
+    flex: 1,
   },
-  settingIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: colors.surfaceLight,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  settingTitle: {
+  settingLabel: {
     fontSize: typography.fontSize.md,
     fontWeight: typography.fontWeight.medium,
     color: colors.text,
   },
   settingSubtitle: {
     fontSize: typography.fontSize.sm,
-    color: colors.textMuted,
+    color: colors.textSecondary,
     marginTop: 2,
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    marginHorizontal: spacing.xl,
+    backgroundColor: colors.expense + '10',
+    borderRadius: 12,
+    padding: spacing.base,
+    marginBottom: spacing.xl,
+  },
+  logoutText: {
+    fontSize: typography.fontSize.md,
+    fontWeight: typography.fontWeight.medium,
+    color: colors.expense,
   },
   footer: {
     alignItems: 'center',
-    paddingVertical: spacing['2xl'],
+    paddingBottom: spacing.xl,
     gap: spacing.xs,
   },
-  version: {
-    fontSize: typography.fontSize.sm,
-    color: colors.textMuted,
-  },
-  copyright: {
+  footerText: {
     fontSize: typography.fontSize.sm,
     color: colors.textMuted,
   },

@@ -4,9 +4,9 @@ export type RootStackParamList = {
   Register: undefined;
   ForgotPassword: undefined;
   Main: undefined;
-  AddTransaction: { type?: 'income' | 'expense' | 'transfer' };
+  AddTransaction: { type?: 'income' | 'expense' | 'transfer'; prefill?: any };
   TransactionDetail: { transactionId: string };
-  TransactionList: undefined;
+  TransactionList: { imported?: any[] } | undefined;
   EditTransaction: { transactionId: string };
   Accounts: undefined;
   AddAccount: undefined;
@@ -15,10 +15,12 @@ export type RootStackParamList = {
   Subscription: undefined;
   PrivacyPolicy: undefined;
   TermsOfUse: undefined;
+  Privacy: undefined;
+  PendingTransactions: undefined;
 };
 
 export type TabParamList = {
-  Dashboard: undefined;
+  Home: undefined;
   Capture: undefined;
   Reports: undefined;
   Settings: undefined;

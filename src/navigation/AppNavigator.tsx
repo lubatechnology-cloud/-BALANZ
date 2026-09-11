@@ -11,6 +11,9 @@ import AddTransactionScreen from '../screens/transactions/AddTransactionScreen';
 import TransactionDetailScreen from '../screens/transactions/TransactionDetailScreen';
 import TransactionListScreen from '../screens/transactions/TransactionListScreen';
 import AccountsScreen from '../screens/accounts/AccountsScreen';
+import SubscriptionScreen from '../screens/settings/SubscriptionScreen';
+import PrivacyScreen from '../screens/settings/PrivacyScreen';
+import PendingTransactionsScreen from '../screens/capture/PendingTransactionsScreen';
 import { ActivityIndicator, View } from 'react-native';
 import { colors } from '../theme';
 
@@ -71,6 +74,9 @@ export default function AppNavigator() {
           <Stack.Screen name="TransactionDetail" component={TransactionDetailScreen} />
           <Stack.Screen name="TransactionList" component={TransactionListScreen} />
           <Stack.Screen name="Accounts" component={AccountsScreen} />
+          <Stack.Screen name="Subscription" component={SubscriptionScreen} />
+          <Stack.Screen name="Privacy" component={PrivacyScreen} />
+          <Stack.Screen name="PendingTransactions" component={PendingTransactionsScreen} />
         </>
       )}
     </Stack.Navigator>
