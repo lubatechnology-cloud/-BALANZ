@@ -4,13 +4,14 @@ export type RootStackParamList = {
   Register: undefined;
   ForgotPassword: undefined;
   Main: undefined;
-  TransactionDetail: { transactionId: string };
   AddTransaction: { type?: 'income' | 'expense' | 'transfer' };
+  TransactionDetail: { transactionId: string };
+  TransactionList: undefined;
   EditTransaction: { transactionId: string };
-  Goals: undefined;
-  AddGoal: undefined;
   Accounts: undefined;
   AddAccount: undefined;
+  Goals: undefined;
+  AddGoal: undefined;
   Subscription: undefined;
   PrivacyPolicy: undefined;
   TermsOfUse: undefined;

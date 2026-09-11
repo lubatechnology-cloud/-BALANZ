@@ -14,12 +14,6 @@ import { colors, spacing, typography } from '../../theme';
 import { formatCurrency, getGreeting } from '../../utils/formatters';
 import { useAuth, useTransactions } from '../../hooks';
 
-const MOCK_DATA = {
-  balance: 5420.50,
-  income: 8500.00,
-  expense: 3079.50,
-};
-
 const categoryIcons: Record<string, string> = {
   food: 'cart',
   transport: 'car',
@@ -28,6 +22,14 @@ const categoryIcons: Record<string, string> = {
   housing: 'home',
   leisure: 'play-circle',
   shopping: 'bag',
+  supermarket: 'cart',
+  restaurant: 'restaurant',
+  delivery: 'bicycle',
+  uber: 'car',
+  fuel: 'speedometer',
+  rent: 'home',
+  streaming: 'play',
+  gym: 'fitness',
 };
 
 export default function DashboardScreen({ navigation }: any) {
@@ -37,7 +39,6 @@ export default function DashboardScreen({ navigation }: any) {
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
-    // Reload data here
     setTimeout(() => setRefreshing(false), 1500);
   }, []);
 
@@ -77,57 +78,65 @@ export default function DashboardScreen({ navigation }: any) {
             <Text style={styles.userName}>{user?.displayName || 'Usuário'}</Text>
           </View>
           <TouchableOpacity style={styles.avatar} onPress={handleLogout}>
-            {user?.photoURL ? (
-              <Ionicons name="person" size={24} color={colors.primary} />
-            ) : (
-              <Ionicons name="person" size={24} color={colors.primary} />
-            )}
+            <Ionicons name="person" size={24} color={colors.primary} />
           </TouchableOpacity>
         </View>
 
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>Saldo total</Text>
           <Text style={[styles.balanceValue, { color: balanceColor }]}>
-            {formatCurrency(balance || MOCK_DATA.balance)}
+            {formatCurrency(balance)}
           </Text>
           <View style={styles.balanceDetails}>
             <View style={styles.balanceDetail}>
               <View style={[styles.indicator, { backgroundColor: colors.income }]} />
               <Text style={styles.balanceDetailLabel}>Receitas</Text>
               <Text style={[styles.balanceDetailValue, { color: colors.income }]}>
-                {formatCurrency(income || MOCK_DATA.income)}
+                {formatCurrency(income)}
               </Text>
             </View>
             <View style={styles.balanceDetail}>
               <View style={[styles.indicator, { backgroundColor: colors.expense }]} />
               <Text style={styles.balanceDetailLabel}>Despesas</Text>
               <Text style={[styles.balanceDetailValue, { color: colors.expense }]}>
-                {formatCurrency(Math.abs(expense || MOCK_DATA.expense))}
+                {formatCurrency(Math.abs(expense))}
               </Text>
             </View>
           </View>
         </View>
 
         <View style={styles.quickActions}>
-          <TouchableOpacity style={styles.quickAction}>
+          <TouchableOpacity
+            style={styles.quickAction}
+            onPress={() => navigation.navigate('AddTransaction', { type: 'income' })}
+          >
             <View style={[styles.quickActionIcon, { backgroundColor: colors.income + '20' }]}>
               <Ionicons name="add-circle" size={24} color={colors.income} />
             </View>
             <Text style={styles.quickActionLabel}>Receita</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.quickAction}>
+          <TouchableOpacity
+            style={styles.quickAction}
+            onPress={() => navigation.navigate('AddTransaction', { type: 'expense' })}
+          >
             <View style={[styles.quickActionIcon, { backgroundColor: colors.expense + '20' }]}>
               <Ionicons name="remove-circle" size={24} color={colors.expense} />
             </View>
             <Text style={styles.quickActionLabel}>Despesa</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.quickAction}>
+          <TouchableOpacity
+            style={styles.quickAction}
+            onPress={() => navigation.navigate('Accounts')}
+          >
             <View style={[styles.quickActionIcon, { backgroundColor: colors.primary + '20' }]}>
-              <Ionicons name="swap-horizontal" size={24} color={colors.primary} />
+              <Ionicons name="wallet" size={24} color={colors.primary} />
             </View>
-            <Text style={styles.quickActionLabel}>Transferir</Text>
+            <Text style={styles.quickActionLabel}>Contas</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.quickAction}>
+          <TouchableOpacity
+            style={styles.quickAction}
+            onPress={() => navigation.navigate('AddTransaction', { type: 'expense' })}
+          >
             <View style={[styles.quickActionIcon, { backgroundColor: colors.secondary + '20' }]}>
               <Ionicons name="mic" size={24} color={colors.secondary} />
             </View>
@@ -138,7 +147,7 @@ export default function DashboardScreen({ navigation }: any) {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Transações recentes</Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('TransactionList')}>
               <Text style={styles.seeAll}>Ver todas</Text>
             </TouchableOpacity>
           </View>
@@ -147,39 +156,52 @@ export default function DashboardScreen({ navigation }: any) {
             <View style={styles.emptyState}>
               <Ionicons name="wallet-outline" size={48} color={colors.textMuted} />
               <Text style={styles.emptyText}>Nenhuma transação ainda</Text>
-              <Text style={styles.emptySubtext}>Adicione sua primeira transação</Text>
+              <Text style={styles.emptySubtext}>
+                Toque em "Adicionar" para começar
+              </Text>
             </View>
           ) : (
-            recentTransactions.map((transaction) => (
-              <TouchableOpacity key={transaction.id} style={styles.transactionItem}>
-                <View style={styles.transactionLeft}>
-                  <View style={styles.transactionIcon}>
-                    <Ionicons
-                      name={(categoryIcons[transaction.category] || 'wallet') as any}
-                      size={20}
-                      color={colors.primary}
-                    />
-                  </View>
-                  <View>
-                    <Text style={styles.transactionDescription}>
-                      {transaction.description}
-                    </Text>
-                    <Text style={styles.transactionDate}>
-                      {new Date(transaction.date).toLocaleDateString('pt-BR')}
-                    </Text>
-                  </View>
-                </View>
-                <Text
-                  style={[
-                    styles.transactionAmount,
-                    { color: transaction.type === 'income' ? colors.income : colors.expense },
-                  ]}
+            recentTransactions.map((transaction) => {
+              const isIncome = transaction.type === 'income';
+              return (
+                <TouchableOpacity
+                  key={transaction.id}
+                  style={styles.transactionItem}
+                  onPress={() =>
+                    navigation.navigate('TransactionDetail', {
+                      transactionId: transaction.id,
+                    })
+                  }
                 >
-                  {transaction.type === 'income' ? '+' : '-'}
-                  {formatCurrency(transaction.amount)}
-                </Text>
-              </TouchableOpacity>
-            ))
+                  <View style={styles.transactionLeft}>
+                    <View style={styles.transactionIcon}>
+                      <Ionicons
+                        name={(categoryIcons[transaction.category] || 'wallet') as any}
+                        size={20}
+                        color={isIncome ? colors.income : colors.expense}
+                      />
+                    </View>
+                    <View>
+                      <Text style={styles.transactionDescription}>
+                        {transaction.description}
+                      </Text>
+                      <Text style={styles.transactionDate}>
+                        {new Date(transaction.date).toLocaleDateString('pt-BR')}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text
+                    style={[
+                      styles.transactionAmount,
+                      { color: isIncome ? colors.income : colors.expense },
+                    ]}
+                  >
+                    {isIncome ? '+' : '-'}
+                    {formatCurrency(transaction.amount)}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })
           )}
         </View>
       </ScrollView>

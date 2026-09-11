@@ -7,6 +7,10 @@ import RegisterScreen from '../screens/auth/RegisterScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 import MainTabNavigator from './MainTabNavigator';
 import OnboardingScreen from '../screens/onboarding/OnboardingScreen';
+import AddTransactionScreen from '../screens/transactions/AddTransactionScreen';
+import TransactionDetailScreen from '../screens/transactions/TransactionDetailScreen';
+import TransactionListScreen from '../screens/transactions/TransactionListScreen';
+import AccountsScreen from '../screens/accounts/AccountsScreen';
 import { ActivityIndicator, View } from 'react-native';
 import { colors } from '../theme';
 
@@ -25,7 +29,6 @@ export default function AppNavigator() {
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = React.useState(false);
 
   React.useEffect(() => {
-    // Check onboarding status from AsyncStorage
     const checkOnboarding = async () => {
       try {
         const AsyncStorage = require('@react-native-async-storage/async-storage').default;
@@ -62,7 +65,13 @@ export default function AppNavigator() {
           <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
         </>
       ) : (
-        <Stack.Screen name="Main" component={MainTabNavigator} />
+        <>
+          <Stack.Screen name="Main" component={MainTabNavigator} />
+          <Stack.Screen name="AddTransaction" component={AddTransactionScreen} />
+          <Stack.Screen name="TransactionDetail" component={TransactionDetailScreen} />
+          <Stack.Screen name="TransactionList" component={TransactionListScreen} />
+          <Stack.Screen name="Accounts" component={AccountsScreen} />
+        </>
       )}
     </Stack.Navigator>
   );
