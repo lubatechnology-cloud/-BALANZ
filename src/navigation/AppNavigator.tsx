@@ -14,6 +14,14 @@ import AccountsScreen from '../screens/accounts/AccountsScreen';
 import SubscriptionScreen from '../screens/settings/SubscriptionScreen';
 import PrivacyScreen from '../screens/settings/PrivacyScreen';
 import PendingTransactionsScreen from '../screens/capture/PendingTransactionsScreen';
+import NotificationSettingsScreen from '../screens/settings/NotificationSettingsScreen';
+import BackupScreen from '../screens/settings/BackupScreen';
+import HelpScreen from '../screens/help/HelpScreen';
+import SummaryScreen from '../screens/reports/SummaryScreen';
+import BudgetScreen from '../screens/budget/BudgetScreen';
+import GoalsScreen from '../screens/goals/GoalsScreen';
+import CurrencyConverterScreen from '../screens/tools/CurrencyConverterScreen';
+import FinancialHealthScreen from '../screens/reports/FinancialHealthScreen';
 import { ActivityIndicator, View } from 'react-native';
 import { colors } from '../theme';
 
@@ -77,6 +85,14 @@ export default function AppNavigator() {
           <Stack.Screen name="Subscription" component={SubscriptionScreen} />
           <Stack.Screen name="Privacy" component={PrivacyScreen} />
           <Stack.Screen name="PendingTransactions" component={PendingTransactionsScreen} />
+          <Stack.Screen name="Notifications" component={NotificationSettingsScreen} />
+          <Stack.Screen name="Backup" component={BackupScreen} />
+          <Stack.Screen name="Help" component={HelpScreen} />
+          <Stack.Screen name="Summary" component={SummaryScreen} />
+          <Stack.Screen name="Budget" component={BudgetScreen} />
+          <Stack.Screen name="Goals" component={GoalsScreen} />
+          <Stack.Screen name="CurrencyConverter" component={CurrencyConverterScreen} />
+          <Stack.Screen name="FinancialHealth" component={FinancialHealthScreen} />
         </>
       )}
     </Stack.Navigator>

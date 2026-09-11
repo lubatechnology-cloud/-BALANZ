@@ -1,14 +1,62 @@
+# iOS
+ios/
+*.ios.js
+google-service-account.json
+
+# Android
+android/
+*.android.js
+*.apk
+*.aab
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Dependencies
 node_modules/
+jspm_packages/
+
+# Expo
 .expo/
 dist/
+web-build/
+
+# Native
+*.orig.*
 *.jks
 *.p8
 *.p12
 *.key
 *.mobileprovision
-*.orig.*
-web-build/
-.env
-.env.local
-google-services.json
-GoogleService-Info.plist
+*.provisionprofile
+
+# Metro
+.metro-health-check*
+
+# Debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.swp
+*~
+
+# IDEs
+.vscode/
+.idea/
+
+# Tests
+coverage/
+
+# Build
+build/
+*.tgz
+
+# Secrets
+*.pem
+*.cert
+*.key

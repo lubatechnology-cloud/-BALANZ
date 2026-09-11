@@ -11,12 +11,19 @@ export type RootStackParamList = {
   Accounts: undefined;
   AddAccount: undefined;
   Goals: undefined;
-  AddGoal: undefined;
+  AddGoal: { suggestion?: any } | undefined;
+  Budget: undefined;
   Subscription: undefined;
   PrivacyPolicy: undefined;
   TermsOfUse: undefined;
   Privacy: undefined;
   PendingTransactions: undefined;
+  Notifications: undefined;
+  Backup: undefined;
+  Help: undefined;
+  Summary: undefined;
+  CurrencyConverter: undefined;
+  FinancialHealth: undefined;
 };
 
 export type TabParamList = {
