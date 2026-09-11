@@ -1,10 +1,8 @@
 import { Platform } from 'react-native';
-import * as Keychain from 'react-native-keychain';
 import * as Crypto from 'expo-crypto';
 import * as LocalAuthentication from 'expo-local-authentication';
-import Constants from 'expo-constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const ENCRYPTION_KEY = 'balanz-encryption-key';
 const BIOMETRIC_SERVICE = 'balanz-biometric';
 
 export async function encryptData(data: string): Promise<string> {
@@ -25,10 +23,7 @@ export async function secureStore(
   value: string
 ): Promise<void> {
   try {
-    await Keychain.setGenericPassword(key, value, {
-      service: BIOMETRIC_SERVICE,
-      accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-    });
+    await AsyncStorage.setItem(`@secure_${key}`, value);
   } catch (error) {
     console.error('Erro ao salvar seguro:', error);
   }
@@ -36,10 +31,7 @@ export async function secureStore(
 
 export async function secureRetrieve(key: string): Promise<string | null> {
   try {
-    const credentials = await Keychain.getGenericPassword({
-      service: BIOMETRIC_SERVICE,
-    });
-    return credentials ? credentials.password : null;
+    return await AsyncStorage.getItem(`@secure_${key}`);
   } catch (error) {
     console.error('Erro ao recuperar seguro:', error);
     return null;
@@ -48,9 +40,7 @@ export async function secureRetrieve(key: string): Promise<string | null> {
 
 export async function secureDelete(key: string): Promise<void> {
   try {
-    await Keychain.resetGenericPassword({
-      service: BIOMETRIC_SERVICE,
-    });
+    await AsyncStorage.removeItem(`@secure_${key}`);
   } catch (error) {
     console.error('Erro ao deletar seguro:', error);
   }
