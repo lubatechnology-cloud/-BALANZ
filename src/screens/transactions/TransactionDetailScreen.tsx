@@ -170,7 +170,10 @@ export default function TransactionDetailScreen({ navigation, route }: Props) {
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.editButton}>
+        <TouchableOpacity
+          style={styles.editButton}
+          onPress={() => navigation.navigate('EditTransaction', { transactionId: transaction.id })}
+        >
           <Ionicons name="create-outline" size={20} color={colors.primary} />
           <Text style={styles.editButtonText}>Editar</Text>
         </TouchableOpacity>

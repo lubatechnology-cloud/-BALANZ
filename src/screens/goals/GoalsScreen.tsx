@@ -6,11 +6,12 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Modal,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '../../theme';
-import { formatCurrency } from '../../utils/formatters';
 import { ProgressBar } from '../../components/charts/Charts';
 import { useAuth } from '../../hooks';
 import { getGoals, createGoal, addToGoal, deleteGoal, getGoalSuggestions, Goal } from '../../services/goals/goalService';
@@ -19,6 +20,9 @@ export default function GoalsScreen({ navigation }: any) {
   const { user } = useAuth();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
+  const [addAmount, setAddAmount] = useState('');
+  const [showAddModal, setShowAddModal] = useState(false);
 
   useEffect(() => {
     loadGoals();
@@ -31,26 +35,19 @@ export default function GoalsScreen({ navigation }: any) {
   };
 
   const handleAddToGoal = (goal: Goal) => {
-    Alert.prompt(
-      'Adicionar à meta',
-      `Quanto deseja adicionar a "${goal.name}"?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Adicionar',
-          onPress: async (value) => {
-            const amount = parseFloat(value || '0');
-            if (amount > 0 && user?.id) {
-              await addToGoal(user.id, goal.id, amount);
-              loadGoals();
-            }
-          },
-        },
-      ],
-      'plain-text',
-      '',
-      'numeric'
-    );
+    setSelectedGoal(goal);
+    setAddAmount('');
+    setShowAddModal(true);
+  };
+
+  const handleConfirmAdd = async () => {
+    const amount = parseFloat(addAmount || '0');
+    if (amount > 0 && user?.id && selectedGoal) {
+      await addToGoal(user.id, selectedGoal.id, amount);
+      loadGoals();
+      setShowAddModal(false);
+      setSelectedGoal(null);
+    }
   };
 
   const handleDeleteGoal = (goal: Goal) => {
@@ -108,7 +105,7 @@ export default function GoalsScreen({ navigation }: any) {
                 <View style={styles.suggestionInfo}>
                   <Text style={styles.suggestionName}>{suggestion.name}</Text>
                   <Text style={styles.suggestionAmount}>
-                    {formatCurrency(suggestion.targetAmount || 0)}
+                    R$ {(suggestion.targetAmount || 0).toLocaleString('pt-BR')}
                   </Text>
                 </View>
                 <Ionicons name="add-circle" size={24} color={colors.primary} />
@@ -155,19 +152,53 @@ export default function GoalsScreen({ navigation }: any) {
               <ProgressBar progress={goal.percentage} color={goal.color} height={10} />
               <View style={styles.goalFooter}>
                 <Text style={styles.goalAmount}>
-                  {formatCurrency(goal.currentAmount)} / {formatCurrency(goal.targetAmount)}
+                  R$ {(goal.currentAmount || 0).toLocaleString('pt-BR')} / R$ {(goal.targetAmount || 0).toLocaleString('pt-BR')}
                 </Text>
                 <Text style={[styles.goalPercentage, { color: goal.color }]}>
-                  {goal.percentage.toFixed(0)}%
+                  {(goal.percentage || 0).toFixed(0)}%
                 </Text>
               </View>
               <Text style={styles.goalMonthly}>
-                Contribuição mensal: {formatCurrency(goal.monthlyContribution)}
+                Contribuição mensal: R$ {(goal.monthlyContribution || 0).toLocaleString('pt-BR')}
               </Text>
             </TouchableOpacity>
           ))
         )}
       </ScrollView>
+
+      <Modal visible={showAddModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Adicionar à meta</Text>
+            <Text style={styles.modalSubtitle}>
+              {selectedGoal?.name}
+            </Text>
+            <TextInput
+              style={styles.modalInput}
+              value={addAmount}
+              onChangeText={setAddAmount}
+              placeholder="Valor (R$)"
+              placeholderTextColor={colors.textMuted}
+              keyboardType="decimal-pad"
+              autoFocus
+            />
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.modalCancelButton}
+                onPress={() => setShowAddModal(false)}
+              >
+                <Text style={styles.modalCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalConfirmButton}
+                onPress={handleConfirmAdd}
+              >
+                <Text style={styles.modalConfirmText}>Adicionar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -301,5 +332,69 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSize.sm,
     color: colors.textMuted,
     marginTop: spacing.xs,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing.xl,
+  },
+  modalCard: {
+    width: '100%',
+    backgroundColor: colors.surface,
+    borderRadius: 20,
+    padding: spacing.xl,
+  },
+  modalTitle: {
+    fontSize: typography.fontSize.xl,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.text,
+    textAlign: 'center',
+  },
+  modalSubtitle: {
+    fontSize: typography.fontSize.md,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: spacing.xs,
+    marginBottom: spacing.lg,
+  },
+  modalInput: {
+    backgroundColor: colors.background,
+    borderRadius: 12,
+    padding: spacing.base,
+    fontSize: typography.fontSize.xl,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: spacing.lg,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  modalCancelButton: {
+    flex: 1,
+    padding: spacing.base,
+    borderRadius: 12,
+    backgroundColor: colors.surfaceLight,
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    fontSize: typography.fontSize.md,
+    fontWeight: typography.fontWeight.medium,
+    color: colors.text,
+  },
+  modalConfirmButton: {
+    flex: 1,
+    padding: spacing.base,
+    borderRadius: 12,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+  },
+  modalConfirmText: {
+    fontSize: typography.fontSize.md,
+    fontWeight: typography.fontWeight.medium,
+    color: colors.white,
   },
 });

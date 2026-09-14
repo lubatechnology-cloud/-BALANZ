@@ -27,6 +27,8 @@ export const colors = {
   border: '#2D3B50',
   borderLight: '#374357',
 
+  danger: '#FF6B6B',
+  divider: '#2D3B50',
   white: '#FFFFFF',
   black: '#000000',
 

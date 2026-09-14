@@ -94,7 +94,7 @@ export default function AccountsScreen({ navigation }: any) {
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.title}>Contas</Text>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('AddAccount')}>
           <Ionicons name="add" size={28} color={colors.primary} />
         </TouchableOpacity>
       </View>

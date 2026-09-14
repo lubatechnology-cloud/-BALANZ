@@ -107,20 +107,20 @@ export default function HelpScreen({ navigation }: any) {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Recursos</Text>
-          <TouchableOpacity style={styles.resourceItem}>
+          <TouchableOpacity style={styles.resourceItem} onPress={() => Linking.openURL('https://balanz.app/tutorial')}>
             <Ionicons name="play-circle" size={24} color={colors.primary} />
             <Text style={styles.resourceLabel}>Tutorial em vídeo</Text>
-            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+            <Ionicons name="open-outline" size={16} color={colors.textMuted} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.resourceItem}>
+          <TouchableOpacity style={styles.resourceItem} onPress={() => Linking.openURL('https://balanz.app/guia')}>
             <Ionicons name="document-text" size={24} color={colors.primary} />
             <Text style={styles.resourceLabel}>Guia de uso</Text>
-            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+            <Ionicons name="open-outline" size={16} color={colors.textMuted} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.resourceItem}>
+          <TouchableOpacity style={styles.resourceItem} onPress={() => Linking.openURL('https://play.google.com/store/apps/details?id=com.lubatechnology.balanz')}>
             <Ionicons name="star" size={24} color={colors.primary} />
             <Text style={styles.resourceLabel}>Avaliar o app</Text>
-            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+            <Ionicons name="open-outline" size={16} color={colors.textMuted} />
           </TouchableOpacity>
         </View>
 

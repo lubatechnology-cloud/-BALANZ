@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -21,7 +21,7 @@ interface BottomSheetProps {
 }
 
 export function BottomSheet({ visible, onClose, title, children }: BottomSheetProps) {
-  const translateY = new Animated.Value(SCREEN_HEIGHT);
+  const translateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
 
   useEffect(() => {
     if (visible) {
@@ -133,7 +133,7 @@ interface ToastProps {
 }
 
 export function Toast({ visible, message, type = 'info', duration = 3000, onHide }: ToastProps) {
-  const opacity = new Animated.Value(0);
+  const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (visible) {

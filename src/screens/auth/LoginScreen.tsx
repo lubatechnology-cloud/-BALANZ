@@ -46,12 +46,7 @@ export default function LoginScreen({ navigation }: any) {
     try {
       await login('demo@balanz.app', '123456');
     } catch {
-      try {
-        const { register } = useAuth();
-        await login('demo@balanz.app', '123456');
-      } catch {
-        Alert.alert('Dica', 'Crie uma conta primeiro ou use demo@balanz.app / 123456');
-      }
+      Alert.alert('Dica', 'Crie uma conta primeiro');
     } finally {
       setIsLoading(false);
     }

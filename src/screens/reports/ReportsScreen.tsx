@@ -156,7 +156,9 @@ export default function ReportsScreen({ navigation }: any) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Resumo Mensal</Text>
           <View style={styles.monthlyCard}>
-            <Text style={styles.monthLabel}>Setembro 2024</Text>
+            <Text style={styles.monthLabel}>
+              {new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+            </Text>
             <View style={styles.monthlyStats}>
               <View style={styles.monthlyStat}>
                 <Text style={styles.monthlyStatLabel}>Transações</Text>

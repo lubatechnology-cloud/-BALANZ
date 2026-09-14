@@ -61,7 +61,7 @@ export default function BudgetScreen({ navigation }: any) {
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.title}>Orçamentos</Text>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => Alert.alert('Em breve', 'Criação de orçamento disponível em breve')}>
           <Ionicons name="add" size={28} color={colors.primary} />
         </TouchableOpacity>
       </View>

@@ -137,6 +137,12 @@ export default function HomeScreen({ navigation }: any) {
             <Text style={styles.emptySubtext}>
               Adicione sua primeira transação
             </Text>
+            <TouchableOpacity
+              style={styles.emptyButton}
+              onPress={() => navigation.navigate('AddTransaction')}
+            >
+              <Text style={styles.emptyButtonText}>Adicionar agora</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -247,6 +253,18 @@ const styles = StyleSheet.create({
   emptySubtext: {
     fontSize: typography.fontSize.sm,
     color: colors.textMuted,
+  },
+  emptyButton: {
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.base,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+  },
+  emptyButtonText: {
+    fontSize: typography.fontSize.sm,
+    fontWeight: typography.fontWeight.semibold,
+    color: colors.white,
   },
   captureCard: {
     flexDirection: 'row',

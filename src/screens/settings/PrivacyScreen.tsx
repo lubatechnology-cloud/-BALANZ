@@ -195,13 +195,19 @@ export default function PrivacyScreen({ navigation }: any) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Políticas</Text>
 
-          <TouchableOpacity style={styles.linkItem}>
+          <TouchableOpacity
+            style={styles.linkItem}
+            onPress={() => navigation.navigate('PrivacyPolicy')}
+          >
             <Ionicons name="document-text" size={20} color={colors.textSecondary} />
             <Text style={styles.linkLabel}>Política de Privacidade</Text>
             <Ionicons name="open-outline" size={16} color={colors.textMuted} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.linkItem}>
+          <TouchableOpacity
+            style={styles.linkItem}
+            onPress={() => navigation.navigate('TermsOfUse')}
+          >
             <Ionicons name="document-text" size={20} color={colors.textSecondary} />
             <Text style={styles.linkLabel}>Termos de Uso</Text>
             <Ionicons name="open-outline" size={16} color={colors.textMuted} />

@@ -1,7 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Crypto from 'expo-crypto';
 
 const USER_KEY = '@balanz_current_user';
 const USERS_KEY = '@balanz_users';
+
+async function hashPassword(password: string): Promise<string> {
+  return await Crypto.digestStringAsync(
+    Crypto.CryptoDigestAlgorithm.SHA256,
+    password + '_balanz_salt'
+  );
+}
 
 export interface LocalUser {
   id: string;
@@ -25,11 +33,13 @@ export async function registerWithEmail(
     throw new Error('Email já cadastrado');
   }
 
+  const hashedPassword = await hashPassword(password);
+
   const newUser: LocalUser = {
     id: Date.now().toString(36) + Math.random().toString(36).substr(2, 9),
     email,
     displayName,
-    password,
+    password: hashedPassword,
     photoURL: null,
     createdAt: new Date().toISOString(),
   };
@@ -50,7 +60,8 @@ export async function loginWithEmail(
   const usersJson = await AsyncStorage.getItem(USERS_KEY);
   const users: LocalUser[] = usersJson ? JSON.parse(usersJson) : [];
 
-  const user = users.find((u) => u.email === email && u.password === password);
+  const hashedPassword = await hashPassword(password);
+  const user = users.find((u) => u.email === email && u.password === hashedPassword);
   if (!user) {
     throw new Error('Email ou senha incorretos');
   }
@@ -90,7 +101,7 @@ export async function resetPassword(email: string): Promise<void> {
     throw new Error('Email não encontrado');
   }
 
-  user.password = '123456';
+  user.password = await hashPassword('123456');
   await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
 }
 

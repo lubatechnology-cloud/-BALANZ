@@ -36,9 +36,6 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 function LoadingScreen() {
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
-      <View style={{ width: 60, height: 60, borderRadius: 16, backgroundColor: colors.primary + '20', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
       <ActivityIndicator size="large" color={colors.primary} />
     </View>
   );
