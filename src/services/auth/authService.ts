@@ -1,134 +1,104 @@
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signInWithCredential,
-  GoogleAuthProvider,
-  OAuthProvider,
-  signOut,
-  updateProfile,
-  sendPasswordResetEmail,
-  onAuthStateChanged,
-  User as FirebaseUser,
-} from 'firebase/auth';
-import * as AuthSession from 'expo-auth-session';
-import * as Crypto from 'expo-crypto';
-import { auth } from '../firebase';
-import { User } from '../types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || 'YOUR_WEB_CLIENT_ID';
-const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || 'YOUR_IOS_CLIENT_ID';
-const APPLE_SERVICE_ID = process.env.EXPO_PUBLIC_APPLE_SERVICE_ID || 'YOUR_APPLE_SERVICE_ID';
-const APPLE_REDIRECT_URI = process.env.EXPO_PUBLIC_APPLE_REDIRECT_URI || 'YOUR_REDIRECT_URI';
+const USER_KEY = '@balanz_current_user';
+const USERS_KEY = '@balanz_users';
 
-function firebaseUserToUser(firebaseUser: FirebaseUser): User {
-  return {
-    id: firebaseUser.uid,
-    email: firebaseUser.email || '',
-    displayName: firebaseUser.displayName,
-    photoURL: firebaseUser.photoURL,
-    createdAt: new Date(firebaseUser.metadata.creationTime || ''),
-    updatedAt: new Date(firebaseUser.metadata.lastSignInTime || ''),
-  };
-}
-
-export async function loginWithEmail(email: string, password: string): Promise<User> {
-  const result = await signInWithEmailAndPassword(auth, email, password);
-  return firebaseUserToUser(result.user);
+export interface LocalUser {
+  id: string;
+  email: string;
+  displayName: string;
+  password: string;
+  photoURL: string | null;
+  createdAt: string;
 }
 
 export async function registerWithEmail(
   email: string,
   password: string,
   displayName: string
-): Promise<User> {
-  const result = await createUserWithEmailAndPassword(auth, email, password);
-  await updateProfile(result.user, { displayName });
-  return firebaseUserToUser(result.user);
-}
+): Promise<LocalUser> {
+  const usersJson = await AsyncStorage.getItem(USERS_KEY);
+  const users: LocalUser[] = usersJson ? JSON.parse(usersJson) : [];
 
-export async function loginWithGoogle(): Promise<User> {
-  const request = new AuthSession.AuthRequest({
-    clientId: GOOGLE_WEB_CLIENT_ID,
-    scopes: ['openid', 'profile', 'email'],
-    redirectUri: AuthSession.makeRedirectUri({
-      scheme: 'balanz',
-      path: 'google',
-    }),
-    responseType: AuthSession.ResponseType.Code,
-  });
-
-  const result = await AuthSession.useAuthSession(request, {
-    prompt: AuthSession.Prompt.Login,
-  });
-
-  if (result.type !== 'success' || !result.authentication) {
-    throw new Error('Google login cancelled');
+  const existing = users.find((u) => u.email === email);
+  if (existing) {
+    throw new Error('Email já cadastrado');
   }
 
-  const credential = GoogleAuthProvider.credential(result.authentication.idToken);
-  const userCredential = await signInWithCredential(auth, credential);
-  return firebaseUserToUser(userCredential.user);
+  const newUser: LocalUser = {
+    id: Date.now().toString(36) + Math.random().toString(36).substr(2, 9),
+    email,
+    displayName,
+    password,
+    photoURL: null,
+    createdAt: new Date().toISOString(),
+  };
+
+  users.push(newUser);
+  await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
+
+  const { password: _, ...userWithoutPassword } = newUser;
+  await AsyncStorage.setItem(USER_KEY, JSON.stringify(userWithoutPassword));
+
+  return newUser;
 }
 
-export async function loginWithApple(): Promise<User> {
-  const nonce = Crypto.randomUUID();
-  const hashedNonce = await Crypto.digestStringAsync(
-    Crypto.CryptoDigestAlgorithm.SHA256,
-    nonce
-  );
+export async function loginWithEmail(
+  email: string,
+  password: string
+): Promise<LocalUser> {
+  const usersJson = await AsyncStorage.getItem(USERS_KEY);
+  const users: LocalUser[] = usersJson ? JSON.parse(usersJson) : [];
 
-  const request = new AuthSession.AuthRequest({
-    clientId: APPLE_SERVICE_ID,
-    scopes: ['name', 'email'],
-    redirectUri: AuthSession.makeRedirectUri({
-      scheme: 'balanz',
-      path: 'apple',
-    }),
-    responseType: AuthSession.ResponseType.IdToken,
-    nonce: hashedNonce,
-  });
-
-  const result = await AuthSession.useAuthSession(request, {
-    prompt: AuthSession.Prompt.Login,
-  });
-
-  if (result.type !== 'success' || !result.authentication) {
-    throw new Error('Apple login cancelled');
+  const user = users.find((u) => u.email === email && u.password === password);
+  if (!user) {
+    throw new Error('Email ou senha incorretos');
   }
 
-  const credential = new OAuthProvider('apple.com').credential({
-    idToken: result.authentication.idToken,
-    rawNonce: nonce,
-  });
+  const { password: _, ...userWithoutPassword } = user;
+  await AsyncStorage.setItem(USER_KEY, JSON.stringify(userWithoutPassword));
 
-  const userCredential = await signInWithCredential(auth, credential);
-  return firebaseUserToUser(userCredential.user);
+  return user;
 }
 
 export async function logout(): Promise<void> {
-  await signOut(auth);
+  await AsyncStorage.removeItem(USER_KEY);
+}
+
+export async function getCurrentUser(): Promise<Omit<LocalUser, 'password'> | null> {
+  const userJson = await AsyncStorage.getItem(USER_KEY);
+  return userJson ? JSON.parse(userJson) : null;
+}
+
+export async function updateProfile(
+  updates: Partial<Pick<LocalUser, 'displayName' | 'photoURL'>>
+): Promise<void> {
+  const userJson = await AsyncStorage.getItem(USER_KEY);
+  if (!userJson) return;
+
+  const user = JSON.parse(userJson);
+  const updated = { ...user, ...updates };
+  await AsyncStorage.setItem(USER_KEY, JSON.stringify(updated));
 }
 
 export async function resetPassword(email: string): Promise<void> {
-  await sendPasswordResetEmail(auth, email);
-}
+  const usersJson = await AsyncStorage.getItem(USERS_KEY);
+  const users: LocalUser[] = usersJson ? JSON.parse(usersJson) : [];
 
-export function onAuthStateChange(callback: (user: User | null) => void) {
-  return onAuthStateChanged(auth, (firebaseUser) => {
-    callback(firebaseUser ? firebaseUserToUser(firebaseUser) : null);
-  });
-}
-
-export async function updateDisplayName(displayName: string): Promise<void> {
-  const user = auth.currentUser;
-  if (user) {
-    await updateProfile(user, { displayName });
+  const user = users.find((u) => u.email === email);
+  if (!user) {
+    throw new Error('Email não encontrado');
   }
+
+  user.password = '123456';
+  await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
 }
 
-export async function updatePhotoURL(photoURL: string): Promise<void> {
-  const user = auth.currentUser;
-  if (user) {
-    await updateProfile(user, { photoURL });
-  }
+export async function isOnboardingCompleted(): Promise<boolean> {
+  const value = await AsyncStorage.getItem('@balanz_onboarding_completed');
+  return value === 'true';
+}
+
+export async function completeOnboarding(): Promise<void> {
+  await AsyncStorage.setItem('@balanz_onboarding_completed', 'true');
 }

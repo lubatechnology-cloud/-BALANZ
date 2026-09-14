@@ -1,64 +1,59 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
+  TextInput,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   Alert,
-  ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '../../theme';
-import { validateEmail } from '../../utils/validators';
 import { useAuth } from '../../hooks';
 
+const { width } = Dimensions.get('window');
+
 export default function LoginScreen({ navigation }: any) {
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const { login, googleLogin, appleLogin, isLoading, error, clearError } = useAuth();
-
-  useEffect(() => {
-    if (error) {
-      Alert.alert('Erro', error);
-      clearError();
-    }
-  }, [error]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!validateEmail(email)) {
-      Alert.alert('Erro', 'Email inválido');
-      return;
-    }
-    if (!password) {
-      Alert.alert('Erro', 'Insira a sua senha');
+    if (!email.trim() || !password.trim()) {
+      Alert.alert('Erro', 'Preencha todos os campos');
       return;
     }
 
+    setIsLoading(true);
     try {
-      await login(email, password);
-    } catch (err) {
-      // Error handled by useAuth hook
+      await login(email.trim(), password);
+    } catch (error: any) {
+      Alert.alert('Erro', error.message || 'Falha ao fazer login');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const handleQuickLogin = async () => {
+    setIsLoading(true);
     try {
-      await googleLogin();
-    } catch (err) {
-      // Error handled by useAuth hook
-    }
-  };
-
-  const handleAppleLogin = async () => {
-    try {
-      await appleLogin();
-    } catch (err) {
-      // Error handled by useAuth hook
+      await login('demo@balanz.app', '123456');
+    } catch {
+      try {
+        const { register } = useAuth();
+        await login('demo@balanz.app', '123456');
+      } catch {
+        Alert.alert('Dica', 'Crie uma conta primeiro ou use demo@balanz.app / 123456');
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -66,100 +61,82 @@ export default function LoginScreen({ navigation }: any) {
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.content}
+        style={styles.keyboardView}
       >
-        <View style={styles.header}>
-          <Text style={styles.logo}>BALANZ</Text>
-          <Text style={styles.subtitle}>
-            Controle total das suas finanças
-          </Text>
-        </View>
-
-        <View style={styles.form}>
-          <View style={styles.inputContainer}>
-            <Ionicons name="mail-outline" size={20} color={colors.textMuted} />
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              placeholderTextColor={colors.textMuted}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!isLoading}
-            />
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.header}>
+            <View style={styles.logoContainer}>
+              <View style={styles.logo}>
+                <Ionicons name="wallet" size={40} color={colors.primary} />
+              </View>
+            </View>
+            <Text style={styles.appName}>BALANZ</Text>
+            <Text style={styles.tagline}>Suas finanças, seu controle</Text>
           </View>
 
-          <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={20} color={colors.textMuted} />
-            <TextInput
-              style={styles.input}
-              placeholder="Senha"
-              placeholderTextColor={colors.textMuted}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-              editable={!isLoading}
-            />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-              <Ionicons
-                name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                size={20}
-                color={colors.textMuted}
+          <View style={styles.form}>
+            <View style={styles.inputContainer}>
+              <Ionicons name="mail-outline" size={20} color={colors.textMuted} />
+              <TextInput
+                style={styles.input}
+                value={email}
+                onChangeText={setEmail}
+                placeholder="Email"
+                placeholderTextColor={colors.textMuted}
+                keyboardType="email-address"
+                autoCapitalize="none"
               />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Ionicons name="lock-closed-outline" size={20} color={colors.textMuted} />
+              <TextInput
+                style={styles.input}
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Senha"
+                placeholderTextColor={colors.textMuted}
+                secureTextEntry={!showPassword}
+              />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                <Ionicons
+                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                  size={20}
+                  color={colors.textMuted}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+              <Text style={styles.forgotPassword}>Esqueceu a senha?</Text>
             </TouchableOpacity>
-          </View>
 
-          <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
-            <Text style={styles.forgotPassword}>Esqueceu a senha?</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.button, isLoading && styles.buttonDisabled]}
-            onPress={handleLogin}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color={colors.white} />
-            ) : (
-              <Text style={styles.buttonText}>Entrar</Text>
-            )}
-          </TouchableOpacity>
-
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>ou</Text>
-            <View style={styles.dividerLine} />
-          </View>
-
-          <TouchableOpacity
-            style={styles.socialButton}
-            onPress={handleGoogleLogin}
-            disabled={isLoading}
-          >
-            <Ionicons name="logo-google" size={20} color={colors.white} />
-            <Text style={styles.socialButtonText}>Entrar com Google</Text>
-          </TouchableOpacity>
-
-          {Platform.OS === 'ios' && (
             <TouchableOpacity
-              style={[styles.socialButton, styles.appleButton]}
-              onPress={handleAppleLogin}
+              style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
+              onPress={handleLogin}
               disabled={isLoading}
             >
-              <Ionicons name="logo-apple" size={20} color={colors.white} />
-              <Text style={styles.socialButtonText}>Entrar com Apple</Text>
+              <Text style={styles.loginButtonText}>
+                {isLoading ? 'Entrando...' : 'Entrar'}
+              </Text>
             </TouchableOpacity>
-          )}
-        </View>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Não tem conta? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-            <Text style={styles.footerLink}>Criar conta</Text>
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity style={styles.quickLoginButton} onPress={handleQuickLogin}>
+              <Ionicons name="play-circle" size={20} color={colors.primary} />
+              <Text style={styles.quickLoginText}>Entrar como demonstração</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Não tem uma conta? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+              <Text style={styles.registerLink}>Criar conta</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -170,28 +147,42 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  content: {
+  keyboardView: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
     paddingHorizontal: spacing.xl,
   },
   header: {
     alignItems: 'center',
-    marginTop: spacing['4xl'],
     marginBottom: spacing['3xl'],
   },
+  logoContainer: {
+    marginBottom: spacing.lg,
+  },
   logo: {
+    width: 80,
+    height: 80,
+    borderRadius: 24,
+    backgroundColor: colors.primary + '20',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  appName: {
     fontSize: typography.fontSize['4xl'],
-    fontWeight: typography.fontWeight.bold,
-    color: colors.primary,
+    fontWeight: typography.fontWeight.extrabold,
+    color: colors.text,
     letterSpacing: 4,
   },
-  subtitle: {
-    fontSize: typography.fontSize.base,
+  tagline: {
+    fontSize: typography.fontSize.md,
     color: colors.textSecondary,
     marginTop: spacing.sm,
   },
   form: {
-    gap: spacing.base,
+    gap: spacing.md,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -201,82 +192,68 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.base,
     height: 56,
     gap: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
   input: {
     flex: 1,
-    fontSize: typography.fontSize.base,
+    fontSize: typography.fontSize.md,
     color: colors.text,
   },
   forgotPassword: {
-    fontSize: typography.fontSize.md,
+    fontSize: typography.fontSize.sm,
     color: colors.primary,
     textAlign: 'right',
+    marginTop: spacing.xs,
   },
-  button: {
+  loginButton: {
     backgroundColor: colors.primary,
     borderRadius: 12,
     height: 56,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: spacing.sm,
+    marginTop: spacing.md,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  buttonDisabled: {
+  loginButtonDisabled: {
     opacity: 0.6,
   },
-  buttonText: {
+  loginButtonText: {
     fontSize: typography.fontSize.lg,
     fontWeight: typography.fontWeight.semibold,
     color: colors.white,
   },
-  divider: {
+  quickLoginButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: spacing.base,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.border,
-  },
-  dividerText: {
-    marginHorizontal: spacing.base,
-    color: colors.textMuted,
-    fontSize: typography.fontSize.sm,
-  },
-  socialButton: {
-    flexDirection: 'row',
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    height: 56,
     justifyContent: 'center',
-    alignItems: 'center',
-    gap: spacing.md,
+    gap: spacing.sm,
+    marginTop: spacing.base,
+    paddingVertical: spacing.md,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.primary + '40',
+    backgroundColor: colors.primary + '10',
   },
-  appleButton: {
-    backgroundColor: colors.black,
-    borderColor: colors.white,
-  },
-  socialButtonText: {
-    fontSize: typography.fontSize.base,
+  quickLoginText: {
+    fontSize: typography.fontSize.md,
+    color: colors.primary,
     fontWeight: typography.fontWeight.medium,
-    color: colors.white,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: spacing['2xl'],
+    marginTop: spacing['3xl'],
   },
   footerText: {
     fontSize: typography.fontSize.md,
     color: colors.textSecondary,
   },
-  footerLink: {
+  registerLink: {
     fontSize: typography.fontSize.md,
-    fontWeight: typography.fontWeight.semibold,
     color: colors.primary,
+    fontWeight: typography.fontWeight.semibold,
   },
 });

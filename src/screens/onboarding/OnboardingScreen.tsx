@@ -1,85 +1,164 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   Dimensions,
+  TouchableOpacity,
+  Animated,
+  FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, spacing, typography } from '../../theme';
-import { ONBOARDING_STEPS } from '../../utils/constants';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
-interface OnboardingScreenProps {
-  navigation: any;
-  route: any;
-}
+const slides = [
+  {
+    id: '1',
+    title: 'Controle Total',
+    subtitle: 'Gerencie suas finanças de forma inteligente e simples',
+    icon: 'wallet' as const,
+    color: colors.primary,
+  },
+  {
+    id: '2',
+    title: 'Captura Automática',
+    subtitle: 'Detecte transações via SMS, voz e notificações',
+    icon: 'scan' as const,
+    color: colors.secondary,
+  },
+  {
+    id: '3',
+    title: 'Relatórios Poderosos',
+    subtitle: 'Visualize seus gastos com gráficos e insights',
+    icon: 'pie-chart' as const,
+    color: colors.income,
+  },
+  {
+    id: '4',
+    title: 'Seguro e Privado',
+    subtitle: 'Seus dados ficam seguros no seu dispositivo',
+    icon: 'shield-checkmark' as const,
+    color: colors.warning,
+  },
+];
 
-export default function OnboardingScreen({ navigation, route }: OnboardingScreenProps) {
-  const [step, setStep] = useState(0);
-  const onComplete = route?.params?.onComplete;
+export default function OnboardingScreen({ navigation, route }: any) {
+  const { onComplete } = route?.params || {};
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const scrollX = useRef(new Animated.Value(0)).current;
+  const flatListRef = useRef<any>(null);
 
-  const handleNext = async () => {
-    if (step < ONBOARDING_STEPS.length - 1) {
-      setStep(step + 1);
+  const handleNext = () => {
+    if (currentIndex < slides.length - 1) {
+      flatListRef.current?.scrollToIndex({ index: currentIndex + 1 });
     } else {
-      await AsyncStorage.setItem('@balanz_onboarding_completed', 'true');
-      if (onComplete) onComplete();
+      onComplete?.();
       navigation.replace('Login');
     }
   };
 
-  const handleSkip = async () => {
-    await AsyncStorage.setItem('@balanz_onboarding_completed', 'true');
-    if (onComplete) onComplete();
+  const handleSkip = () => {
+    onComplete?.();
     navigation.replace('Login');
   };
 
-  const current = ONBOARDING_STEPS[step];
+  const renderItem = ({ item, index }: { item: any; index: number }) => {
+    const inputRange = [(index - 1) * width, index * width, (index + 1) * width];
+    const opacity = scrollX.interpolate({
+      inputRange,
+      outputRange: [0, 1, 0],
+      extrapolate: 'clamp',
+    });
+    const scale = scrollX.interpolate({
+      inputRange,
+      outputRange: [0.8, 1, 0.8],
+      extrapolate: 'clamp',
+    });
+
+    return (
+      <Animated.View style={[styles.slide, { opacity, transform: [{ scale }] }]}>
+        <View style={[styles.iconContainer, { backgroundColor: item.color + '20' }]}>
+          <Ionicons name={item.icon} size={80} color={item.color} />
+        </View>
+        <Text style={styles.title}>{item.title}</Text>
+        <Text style={styles.subtitle}>{item.subtitle}</Text>
+      </Animated.View>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.logo}>BALANZ</Text>
-        {step < ONBOARDING_STEPS.length - 1 && (
+      <View style={styles.skipContainer}>
+        {currentIndex < slides.length - 1 && (
           <TouchableOpacity onPress={handleSkip}>
-            <Text style={styles.skip}>Pular</Text>
+            <Text style={styles.skipText}>Pular</Text>
           </TouchableOpacity>
         )}
       </View>
 
-      <View style={styles.content}>
-        <View style={styles.iconContainer}>
-          <Ionicons
-            name={current.icon as any}
-            size={80}
-            color={colors.primary}
-          />
-        </View>
-
-        <Text style={styles.title}>{current.title}</Text>
-        <Text style={styles.description}>{current.description}</Text>
-      </View>
+      <FlatList
+        ref={flatListRef}
+        data={slides}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+          { useNativeDriver: true }
+        )}
+        onMomentumScrollEnd={(e) => {
+          setCurrentIndex(Math.round(e.nativeEvent.contentOffset.x / width));
+        }}
+      />
 
       <View style={styles.footer}>
         <View style={styles.dots}>
-          {ONBOARDING_STEPS.map((_, index) => (
-            <View
-              key={index}
-              style={[styles.dot, index === step && styles.dotActive]}
-            />
-          ))}
+          {slides.map((_, index) => {
+            const dotWidth = scrollX.interpolate({
+              inputRange: [
+                (index - 1) * width,
+                index * width,
+                (index + 1) * width,
+              ],
+              outputRange: [8, 24, 8],
+              extrapolate: 'clamp',
+            });
+            const dotOpacity = scrollX.interpolate({
+              inputRange: [
+                (index - 1) * width,
+                index * width,
+                (index + 1) * width,
+              ],
+              outputRange: [0.3, 1, 0.3],
+              extrapolate: 'clamp',
+            });
+            return (
+              <Animated.View
+                key={index}
+                style={[
+                  styles.dot,
+                  {
+                    width: dotWidth,
+                    opacity: dotOpacity,
+                    backgroundColor: colors.primary,
+                  },
+                ]}
+              />
+            );
+          })}
         </View>
 
-        <TouchableOpacity style={styles.button} onPress={handleNext}>
-          <Text style={styles.buttonText}>
-            {step === ONBOARDING_STEPS.length - 1 ? 'Começar' : 'Próximo'}
-          </Text>
-          <Ionicons name="arrow-forward" size={20} color={colors.white} />
+        <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+          <Ionicons
+            name={currentIndex === slides.length - 1 ? 'checkmark' : 'arrow-forward'}
+            size={24}
+            color={colors.white}
+          />
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -91,84 +170,71 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  skipContainer: {
+    alignItems: 'flex-end',
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.base,
   },
-  logo: {
-    fontSize: typography.fontSize.xl,
-    fontWeight: typography.fontWeight.bold,
-    color: colors.primary,
-    letterSpacing: 2,
-  },
-  skip: {
+  skipText: {
     fontSize: typography.fontSize.md,
     color: colors.textSecondary,
+    fontWeight: typography.fontWeight.medium,
   },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
+  slide: {
+    width,
     alignItems: 'center',
-    paddingHorizontal: spacing['2xl'],
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xl,
   },
   iconContainer: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    backgroundColor: colors.surfaceLight,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing['3xl'],
   },
   title: {
-    fontSize: typography.fontSize['2xl'],
+    fontSize: typography.fontSize['4xl'],
     fontWeight: typography.fontWeight.bold,
     color: colors.text,
     textAlign: 'center',
     marginBottom: spacing.base,
   },
-  description: {
-    fontSize: typography.fontSize.base,
+  subtitle: {
+    fontSize: typography.fontSize.lg,
     color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: typography.fontSize.base * typography.lineHeight.relaxed,
+    lineHeight: 26,
+    paddingHorizontal: spacing.lg,
   },
   footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: spacing.xl,
-    paddingBottom: spacing['3xl'],
+    paddingBottom: spacing.xl,
   },
   dots: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    marginBottom: spacing.xl,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.border,
-  },
-  dotActive: {
-    width: 24,
-    backgroundColor: colors.primary,
-  },
-  button: {
-    flexDirection: 'row',
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-    paddingVertical: spacing.base,
-    paddingHorizontal: spacing.xl,
-    justifyContent: 'center',
     alignItems: 'center',
     gap: spacing.sm,
   },
-  buttonText: {
-    fontSize: typography.fontSize.lg,
-    fontWeight: typography.fontWeight.semibold,
-    color: colors.white,
+  dot: {
+    height: 8,
+    borderRadius: 4,
+  },
+  nextButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
 });

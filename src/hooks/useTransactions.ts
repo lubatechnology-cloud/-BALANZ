@@ -1,10 +1,21 @@
 import { useEffect, useCallback } from 'react';
 import { useTransactionStore } from '../store';
-import { getTransactions, createTransaction, updateTransaction, deleteTransaction } from '../services/database/transactionService';
+import {
+  getTransactions,
+  createTransaction,
+  updateTransaction,
+  deleteTransaction,
+} from '../services/database/transactionService';
 import { Transaction, TransactionType } from '../types';
 
 export function useTransactions(userId: string | undefined) {
-  const { transactions, isLoading, setTransactions, setLoading, addTransaction: storeAddTransaction } = useTransactionStore();
+  const {
+    transactions,
+    isLoading,
+    setTransactions,
+    setLoading,
+    addTransaction: storeAddTransaction,
+  } = useTransactionStore();
 
   useEffect(() => {
     if (userId) {

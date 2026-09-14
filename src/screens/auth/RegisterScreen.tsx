@@ -1,61 +1,50 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
+  TextInput,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   ScrollView,
-  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '../../theme';
-import { validateEmail, validatePassword } from '../../utils/validators';
 import { useAuth } from '../../hooks';
 
 export default function RegisterScreen({ navigation }: any) {
+  const { register } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const { register, isLoading, error, clearError } = useAuth();
-
-  const passwordValidation = validatePassword(password);
-
-  useEffect(() => {
-    if (error) {
-      Alert.alert('Erro', error);
-      clearError();
-    }
-  }, [error]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleRegister = async () => {
-    if (!name.trim()) {
-      Alert.alert('Erro', 'Insira o seu nome');
-      return;
-    }
-    if (!validateEmail(email)) {
-      Alert.alert('Erro', 'Email inválido');
-      return;
-    }
-    if (!passwordValidation.isValid) {
-      Alert.alert('Erro', 'A senha não atende aos requisitos');
+    if (!name.trim() || !email.trim() || !password.trim()) {
+      Alert.alert('Erro', 'Preencha todos os campos');
       return;
     }
     if (password !== confirmPassword) {
       Alert.alert('Erro', 'As senhas não coincidem');
       return;
     }
+    if (password.length < 6) {
+      Alert.alert('Erro', 'A senha deve ter pelo menos 6 caracteres');
+      return;
+    }
 
+    setIsLoading(true);
     try {
-      await register(email, password, name);
-    } catch (err) {
-      // Error handled by useAuth hook
+      await register(email.trim(), password, name.trim());
+    } catch (error: any) {
+      Alert.alert('Erro', error.message || 'Falha ao criar conta');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -63,9 +52,12 @@ export default function RegisterScreen({ navigation }: any) {
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.content}
+        style={styles.keyboardView}
       >
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}
@@ -74,9 +66,9 @@ export default function RegisterScreen({ navigation }: any) {
           </TouchableOpacity>
 
           <View style={styles.header}>
-            <Text style={styles.title}>Criar conta</Text>
+            <Text style={styles.title}>Criar Conta</Text>
             <Text style={styles.subtitle}>
-              Comece a controlar suas finanças
+              Comece a controlar suas finanças agora
             </Text>
           </View>
 
@@ -85,12 +77,11 @@ export default function RegisterScreen({ navigation }: any) {
               <Ionicons name="person-outline" size={20} color={colors.textMuted} />
               <TextInput
                 style={styles.input}
-                placeholder="Nome completo"
-                placeholderTextColor={colors.textMuted}
                 value={name}
                 onChangeText={setName}
+                placeholder="Nome completo"
+                placeholderTextColor={colors.textMuted}
                 autoCapitalize="words"
-                editable={!isLoading}
               />
             </View>
 
@@ -98,13 +89,12 @@ export default function RegisterScreen({ navigation }: any) {
               <Ionicons name="mail-outline" size={20} color={colors.textMuted} />
               <TextInput
                 style={styles.input}
-                placeholder="Email"
-                placeholderTextColor={colors.textMuted}
                 value={email}
                 onChangeText={setEmail}
+                placeholder="Email"
+                placeholderTextColor={colors.textMuted}
                 keyboardType="email-address"
                 autoCapitalize="none"
-                editable={!isLoading}
               />
             </View>
 
@@ -112,12 +102,11 @@ export default function RegisterScreen({ navigation }: any) {
               <Ionicons name="lock-closed-outline" size={20} color={colors.textMuted} />
               <TextInput
                 style={styles.input}
-                placeholder="Senha"
-                placeholderTextColor={colors.textMuted}
                 value={password}
                 onChangeText={setPassword}
+                placeholder="Senha (mínimo 6 caracteres)"
+                placeholderTextColor={colors.textMuted}
                 secureTextEntry={!showPassword}
-                editable={!isLoading}
               />
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                 <Ionicons
@@ -128,51 +117,33 @@ export default function RegisterScreen({ navigation }: any) {
               </TouchableOpacity>
             </View>
 
-            {password.length > 0 && (
-              <View style={styles.passwordRequirements}>
-                {passwordValidation.errors.map((error, index) => (
-                  <Text key={index} style={styles.requirementText}>
-                    • {error}
-                  </Text>
-                ))}
-                {passwordValidation.isValid && (
-                  <Text style={[styles.requirementText, styles.requirementValid]}>
-                    ✓ Senha válida
-                  </Text>
-                )}
-              </View>
-            )}
-
             <View style={styles.inputContainer}>
               <Ionicons name="lock-closed-outline" size={20} color={colors.textMuted} />
               <TextInput
                 style={styles.input}
-                placeholder="Confirmar senha"
-                placeholderTextColor={colors.textMuted}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
+                placeholder="Confirmar senha"
+                placeholderTextColor={colors.textMuted}
                 secureTextEntry={!showPassword}
-                editable={!isLoading}
               />
             </View>
 
             <TouchableOpacity
-              style={[styles.button, isLoading && styles.buttonDisabled]}
+              style={[styles.registerButton, isLoading && styles.registerButtonDisabled]}
               onPress={handleRegister}
               disabled={isLoading}
             >
-              {isLoading ? (
-                <ActivityIndicator color={colors.white} />
-              ) : (
-                <Text style={styles.buttonText}>Criar conta</Text>
-              )}
+              <Text style={styles.registerButtonText}>
+                {isLoading ? 'Criando...' : 'Criar conta'}
+              </Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Já tem conta? </Text>
+            <Text style={styles.footerText}>Já tem uma conta? </Text>
             <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Text style={styles.footerLink}>Entrar</Text>
+              <Text style={styles.loginLink}>Fazer login</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -186,18 +157,24 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  content: {
+  keyboardView: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: spacing.xl,
   },
   backButton: {
-    marginTop: spacing.base,
     width: 40,
     height: 40,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
     justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: spacing.base,
   },
   header: {
-    marginTop: spacing.lg,
+    marginTop: spacing['2xl'],
     marginBottom: spacing.xl,
   },
   title: {
@@ -206,7 +183,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   subtitle: {
-    fontSize: typography.fontSize.base,
+    fontSize: typography.fontSize.md,
     color: colors.textSecondary,
     marginTop: spacing.sm,
   },
@@ -221,37 +198,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.base,
     height: 56,
     gap: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
   input: {
     flex: 1,
-    fontSize: typography.fontSize.base,
+    fontSize: typography.fontSize.md,
     color: colors.text,
   },
-  passwordRequirements: {
-    paddingHorizontal: spacing.sm,
-    gap: 2,
-  },
-  requirementText: {
-    fontSize: typography.fontSize.sm,
-    color: colors.danger,
-  },
-  requirementValid: {
-    color: colors.success,
-  },
-  button: {
+  registerButton: {
     backgroundColor: colors.primary,
     borderRadius: 12,
     height: 56,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: spacing.sm,
+    marginTop: spacing.md,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  buttonDisabled: {
+  registerButtonDisabled: {
     opacity: 0.6,
   },
-  buttonText: {
+  registerButtonText: {
     fontSize: typography.fontSize.lg,
     fontWeight: typography.fontWeight.semibold,
     color: colors.white,
@@ -266,9 +235,9 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSize.md,
     color: colors.textSecondary,
   },
-  footerLink: {
+  loginLink: {
     fontSize: typography.fontSize.md,
-    fontWeight: typography.fontWeight.semibold,
     color: colors.primary,
+    fontWeight: typography.fontWeight.semibold,
   },
 });

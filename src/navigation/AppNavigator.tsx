@@ -29,12 +29,16 @@ import TermsOfUseScreen from '../screens/settings/TermsOfUseScreen';
 import PrivacyPolicyScreen from '../screens/settings/PrivacyPolicyScreen';
 import { ActivityIndicator, View } from 'react-native';
 import { colors } from '../theme';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function LoadingScreen() {
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+      <View style={{ width: 60, height: 60, borderRadius: 16, backgroundColor: colors.primary + '20', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
       <ActivityIndicator size="large" color={colors.primary} />
     </View>
   );
@@ -42,12 +46,11 @@ function LoadingScreen() {
 
 export default function AppNavigator() {
   const { user, isLoading } = useAuth();
-  const [hasCompletedOnboarding, setHasCompletedOnboarding] = React.useState(false);
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = React.useState<boolean | null>(null);
 
   React.useEffect(() => {
     const checkOnboarding = async () => {
       try {
-        const AsyncStorage = require('@react-native-async-storage/async-storage').default;
         const completed = await AsyncStorage.getItem('@balanz_onboarding_completed');
         setHasCompletedOnboarding(completed === 'true');
       } catch {
@@ -57,7 +60,7 @@ export default function AppNavigator() {
     checkOnboarding();
   }, []);
 
-  if (isLoading) {
+  if (isLoading || hasCompletedOnboarding === null) {
     return <LoadingScreen />;
   }
 

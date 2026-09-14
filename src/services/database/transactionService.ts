@@ -1,85 +1,69 @@
-import {
-  collection,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  query,
-  where,
-  orderBy,
-  getDocs,
-  getDoc,
-  Timestamp,
-} from 'firebase/firestore';
-import { db } from '../firebase';
-import { Transaction } from '../types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Transaction } from '../../types';
 
-const COLLECTION = 'transactions';
+const getStorageKey = (userId: string) => `@balanz_transactions_${userId}`;
+
+export async function getTransactions(userId: string): Promise<Transaction[]> {
+  const data = await AsyncStorage.getItem(getStorageKey(userId));
+  if (!data) return [];
+  const transactions = JSON.parse(data);
+  return transactions.sort(
+    (a: Transaction, b: Transaction) =>
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+}
 
 export async function createTransaction(
   userId: string,
   transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<Transaction> {
-  const docRef = await addDoc(collection(db, COLLECTION), {
-    ...transaction,
-    userId,
-    date: Timestamp.fromDate(new Date(transaction.date)),
-    createdAt: Timestamp.now(),
-    updatedAt: Timestamp.now(),
-  });
+  const transactions = await getTransactions(userId);
 
-  return {
+  const newTransaction: Transaction = {
     ...transaction,
-    id: docRef.id,
+    id: Date.now().toString(36) + Math.random().toString(36).substr(2, 9),
     createdAt: new Date(),
     updatedAt: new Date(),
   };
-}
 
-export async function getTransactions(userId: string): Promise<Transaction[]> {
-  const q = query(
-    collection(db, COLLECTION),
-    where('userId', '==', userId),
-    orderBy('date', 'desc')
-  );
+  transactions.push(newTransaction);
+  await AsyncStorage.setItem(getStorageKey(userId), JSON.stringify(transactions));
 
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-    date: doc.data().date?.toDate(),
-    createdAt: doc.data().createdAt?.toDate(),
-    updatedAt: doc.data().updatedAt?.toDate(),
-  })) as Transaction[];
-}
-
-export async function getTransactionById(id: string): Promise<Transaction | null> {
-  const docRef = doc(db, COLLECTION, id);
-  const docSnap = await getDoc(docRef);
-
-  if (!docSnap.exists()) return null;
-
-  return {
-    id: docSnap.id,
-    ...docSnap.data(),
-    date: docSnap.data().date?.toDate(),
-    createdAt: docSnap.data().createdAt?.toDate(),
-    updatedAt: docSnap.data().updatedAt?.toDate(),
-  } as Transaction;
+  return newTransaction;
 }
 
 export async function updateTransaction(
   id: string,
   updates: Partial<Transaction>
 ): Promise<void> {
-  const docRef = doc(db, COLLECTION, id);
-  await updateDoc(docRef, {
-    ...updates,
-    updatedAt: Timestamp.now(),
-  });
+  const allKeys = await AsyncStorage.getAllKeys();
+  const transactionKeys = allKeys.filter((k) => k.startsWith('@balanz_transactions_'));
+
+  for (const key of transactionKeys) {
+    const data = await AsyncStorage.getItem(key);
+    if (!data) continue;
+    const transactions: Transaction[] = JSON.parse(data);
+    const index = transactions.findIndex((t) => t.id === id);
+    if (index !== -1) {
+      transactions[index] = { ...transactions[index], ...updates, updatedAt: new Date() };
+      await AsyncStorage.setItem(key, JSON.stringify(transactions));
+      return;
+    }
+  }
 }
 
 export async function deleteTransaction(id: string): Promise<void> {
-  const docRef = doc(db, COLLECTION, id);
-  await deleteDoc(docRef);
+  const allKeys = await AsyncStorage.getAllKeys();
+  const transactionKeys = allKeys.filter((k) => k.startsWith('@balanz_transactions_'));
+
+  for (const key of transactionKeys) {
+    const data = await AsyncStorage.getItem(key);
+    if (!data) continue;
+    const transactions: Transaction[] = JSON.parse(data);
+    const filtered = transactions.filter((t) => t.id !== id);
+    if (filtered.length !== transactions.length) {
+      await AsyncStorage.setItem(key, JSON.stringify(filtered));
+      return;
+    }
+  }
 }

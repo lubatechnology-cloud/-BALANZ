@@ -3,39 +3,38 @@ import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
+  TextInput,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '../../theme';
-import { validateEmail } from '../../utils/validators';
 import { useAuth } from '../../hooks';
 
 export default function ForgotPasswordScreen({ navigation }: any) {
+  const { forgotPassword } = useAuth();
   const [email, setEmail] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [sent, setSent] = useState(false);
-  const { resetPassword } = useAuth();
 
-  const handleResetPassword = async () => {
-    if (!validateEmail(email)) {
-      Alert.alert('Erro', 'Email inválido');
+  const handleReset = async () => {
+    if (!email.trim()) {
+      Alert.alert('Erro', 'Informe seu email');
       return;
     }
 
-    setLoading(true);
+    setIsLoading(true);
     try {
-      await resetPassword(email);
+      await forgotPassword(email.trim());
       setSent(true);
-    } catch (err: any) {
-      Alert.alert('Erro', err.message || 'Erro ao enviar email');
+    } catch (error: any) {
+      Alert.alert('Erro', error.message || 'Falha ao enviar');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -43,71 +42,70 @@ export default function ForgotPasswordScreen({ navigation }: any) {
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.content}
+        style={styles.keyboardView}
       >
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
         >
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
+          </TouchableOpacity>
 
-        <View style={styles.header}>
-          <View style={styles.iconContainer}>
-            <Ionicons name="lock-open" size={40} color={colors.primary} />
-          </View>
-          <Text style={styles.title}>Esqueceu a senha?</Text>
-          <Text style={styles.subtitle}>
-            Insira o seu email e enviaremos um link para redefinir sua senha
-          </Text>
-        </View>
-
-        {sent ? (
-          <View style={styles.successContainer}>
-            <View style={styles.successIcon}>
-              <Ionicons name="checkmark-circle" size={64} color={colors.success} />
+          <View style={styles.header}>
+            <View style={styles.iconContainer}>
+              <Ionicons name="lock-closed" size={40} color={colors.primary} />
             </View>
-            <Text style={styles.successTitle}>Email enviado!</Text>
-            <Text style={styles.successText}>
-              Verifique sua caixa de entrada e clique no link para redefinir sua senha
+            <Text style={styles.title}>Esqueceu a senha?</Text>
+            <Text style={styles.subtitle}>
+              Informe seu email e redefiniremos sua senha
             </Text>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => navigation.goBack()}
-            >
-              <Text style={styles.buttonText}>Voltar ao login</Text>
-            </TouchableOpacity>
           </View>
-        ) : (
-          <View style={styles.form}>
-            <View style={styles.inputContainer}>
-              <Ionicons name="mail-outline" size={20} color={colors.textMuted} />
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                placeholderTextColor={colors.textMuted}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={!loading}
-              />
-            </View>
 
-            <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
-              onPress={handleResetPassword}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color={colors.white} />
-              ) : (
-                <Text style={styles.buttonText}>Enviar link</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        )}
+          {sent ? (
+            <View style={styles.successContainer}>
+              <Ionicons name="checkmark-circle" size={64} color={colors.income} />
+              <Text style={styles.successTitle}>Email enviado!</Text>
+              <Text style={styles.successText}>
+                Verifique sua caixa de entrada e siga as instruções
+              </Text>
+              <TouchableOpacity
+                style={styles.backToLoginButton}
+                onPress={() => navigation.goBack()}
+              >
+                <Text style={styles.backToLoginText}>Voltar ao login</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.form}>
+              <View style={styles.inputContainer}>
+                <Ionicons name="mail-outline" size={20} color={colors.textMuted} />
+                <TextInput
+                  style={styles.input}
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="Seu email"
+                  placeholderTextColor={colors.textMuted}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
+
+              <TouchableOpacity
+                style={[styles.resetButton, isLoading && styles.resetButtonDisabled]}
+                onPress={handleReset}
+                disabled={isLoading}
+              >
+                <Text style={styles.resetButtonText}>
+                  {isLoading ? 'Enviando...' : 'Enviar link de redefinição'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -118,44 +116,49 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  content: {
+  keyboardView: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: spacing.xl,
   },
   backButton: {
-    marginTop: spacing.base,
     width: 40,
     height: 40,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
     justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: spacing.base,
   },
   header: {
     alignItems: 'center',
-    marginTop: spacing['2xl'],
-    marginBottom: spacing['2xl'],
+    marginTop: spacing['3xl'],
+    marginBottom: spacing.xl,
   },
   iconContainer: {
     width: 80,
     height: 80,
-    borderRadius: 40,
+    borderRadius: 24,
     backgroundColor: colors.primary + '20',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
   },
   title: {
-    fontSize: typography.fontSize['2xl'],
+    fontSize: typography.fontSize['3xl'],
     fontWeight: typography.fontWeight.bold,
     color: colors.text,
-    marginBottom: spacing.sm,
   },
   subtitle: {
     fontSize: typography.fontSize.md,
     color: colors.textSecondary,
+    marginTop: spacing.sm,
     textAlign: 'center',
-    lineHeight: 22,
   },
   form: {
-    gap: spacing.base,
+    gap: spacing.md,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -165,36 +168,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.base,
     height: 56,
     gap: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
   input: {
     flex: 1,
-    fontSize: typography.fontSize.base,
+    fontSize: typography.fontSize.md,
     color: colors.text,
   },
-  button: {
+  resetButton: {
     backgroundColor: colors.primary,
     borderRadius: 12,
     height: 56,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: spacing.sm,
+    marginTop: spacing.md,
   },
-  buttonDisabled: {
+  resetButtonDisabled: {
     opacity: 0.6,
   },
-  buttonText: {
+  resetButtonText: {
     fontSize: typography.fontSize.lg,
     fontWeight: typography.fontWeight.semibold,
     color: colors.white,
   },
   successContainer: {
     alignItems: 'center',
-    gap: spacing.base,
-  },
-  successIcon: {
-    marginBottom: spacing.base,
+    gap: spacing.md,
   },
   successTitle: {
     fontSize: typography.fontSize.xl,
@@ -205,6 +203,17 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSize.md,
     color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 22,
+  },
+  backToLoginButton: {
+    marginTop: spacing.lg,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xl,
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+  },
+  backToLoginText: {
+    fontSize: typography.fontSize.md,
+    fontWeight: typography.fontWeight.semibold,
+    color: colors.white,
   },
 });
